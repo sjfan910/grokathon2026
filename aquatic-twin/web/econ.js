@@ -12,6 +12,7 @@ export const ANCHORS = {
 const DAYS_PER_WEEK = 7;
 const MAX_EVENTS = 2;  // Caps damage at twice a 2014-size event. Our assumption.
 const MAX_TREATMENT_EVENTS = 3;  // Same cap for treatment. Our assumption.
+const NEAR_LIMIT_FRACTION = 0.95;  // Within 5% of the guideline reads as "right at" it, not safely under.
 
 // Sum of weekly severity ratings, July to October 2014, from the same report's Tables 3-6 to 3-9.
 // Toledo = Lucas County, Port Clinton = Ottawa mainland, Sandusky = Erie mainland.
@@ -53,11 +54,18 @@ function headline(call) {
   return `Doing nothing puts about <b>${usd(call.before.total)}</b> at risk over this run. This plan costs <b>${usd(call.spend)}</b> and ${verdict}.`;
 }
 
+// The solver's toxin is raw lake water at the intake, before treatment, so this never claims the tap is safe or unsafe.
+function toxinVerdict(peak) {
+  if (peak >= ANCHORS.referenceToxin) return 'over';
+  return peak >= ANCHORS.referenceToxin * NEAR_LIMIT_FRACTION ? 'right at' : 'under';
+}
+
 function toxinLine(call) {
-  if (call.spend <= 0) return `<b>Toledo's tap water:</b> toxin at the intake peaks at ${call.before.peakToxin.toFixed(2)} µg/L. The drinking-water limit is ${ANCHORS.referenceToxin} µg/L.`;
+  const limit = `the WHO drinking-water guideline of ${ANCHORS.referenceToxin} µg/L`;
+  const intro = "<b>Water at Toledo's intake, before treatment:</b> toxin peaks at";
+  if (call.spend <= 0) return `${intro} ${call.before.peakToxin.toFixed(2)} µg/L, ${toxinVerdict(call.before.peakToxin)} ${limit}.`;
   const peak = call.after.peakToxin;
-  const verdict = peak >= ANCHORS.referenceToxin ? 'over the limit, so the tap water is not safe to drink' : 'under the limit';
-  return `<b>Toledo's tap water:</b> toxin at the intake peaks at ${peak.toFixed(2)} µg/L with this plan, ${verdict} of ${ANCHORS.referenceToxin} µg/L. Doing nothing peaks at ${call.before.peakToxin.toFixed(2)} µg/L.`;
+  return `${intro} ${peak.toFixed(2)} µg/L with this plan, ${toxinVerdict(peak)} ${limit}. Doing nothing peaks at ${call.before.peakToxin.toFixed(2)} µg/L.`;
 }
 
 export function renderEarnings(el, call, plan) {

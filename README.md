@@ -60,5 +60,13 @@ We didn't have Grok API or Grok Bot access tonight. The `xai` provider in `aquat
 | Bloom threshold | `bloomChl` 20 µg/L | **Placeholder** | None yet |
 | Mixing and flow | `Kh`, `r`, `driftFrac`, `Cd`, `KzMin`, `heatExchange` | **Placeholder** | None yet |
 | Action costs and doses | `ACTIONS` in `solver.js` | **Placeholder** | None yet |
+| Ohio toxin thresholds | Microcystin 0.3 µg/L (children, sensitive groups) and 1.6 µg/L (everyone) | **Cited, not verified** | Ohio OAC 3745-90-02 |
+| Fishery disaster trigger | Fishing revenue loss of 35% or more | **Cited, not verified** | NOAA, Magnuson-Stevens Act Sec. 312(a) |
+| Ohio boat trips | 251,700 walleye and yellow perch trips, 2024 | **Cited, not verified** | ODNR creel data, from team notes |
+| Angler spending and response | $88 per trip, 1.23 trip elasticity, losses capped at 30% | **Cited, not verified** | Wu, Sohngen & Ludsin (2023); the cap also draws on MUCC figures |
+| Sport fishing ceiling | $69.1M per year | **Cited, not verified** | Wolf, Chen et al. (2019) |
+| Ontario commercial fishery | More than $200M CAD per year | **Cited, not verified** | Industry figure, July 2026 |
+| Harbor shares, oil closures, western basin area, commercial loss line | Fish market section of `econ.js` | **Our assumption** | Not published |
+| Oil harm to fish habitat | Government trigger | **Placeholder** | Screening proxy from zebrafish PAH data |
 
-The $65M covers western Lake Erie in both the US and Canada, and the report describes its tourism figure as indicative. The model's bounds also include Lake St. Clair, which is real water but receives no modelled inflow.
+"Cited, not verified" means the figure comes from team notes and nobody has checked it against the original source yet. The $65M covers western Lake Erie in both the US and Canada, and the report describes its tourism figure as indicative. The model's bounds also include Lake St. Clair, which is real water but receives no modelled inflow.
