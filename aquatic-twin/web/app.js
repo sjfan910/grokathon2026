@@ -16,6 +16,8 @@ fetch('/api/twin/provider').then((r) => r.json()).then((p) => { $('operatorTitle
 let playing = true, stepsPerFrame = 1;
 // The decision point: a fresh bloom hasn't peaked before about day 15, and past about day 25 no plan under budget works.
 const BLOOM_SEASON = { windSpeed: 4, windDir: 225, inflowCfs: 8000, airTempC: 27 }, DECISION_DAY = 15, MAX_DAY = 45;
+let spillUntil = 0;
+const stopAt = () => Math.max(spillUntil, sim.actions.length ? MAX_DAY : DECISION_DAY);
 function setPlaying(on) { playing = on; $('play').textContent = on ? 'Pause' : 'Play'; }
 
 for (const [name, st] of Object.entries(FIELD_STYLE)) $('field').add(new Option(st.label, name));
@@ -26,9 +28,9 @@ legend();
 $('explode').oninput = (e) => view.setExplode(+e.target.value);
 $('layerTo').max = scene.nz - 1; $('layerTo').value = scene.nz - 1;
 $('layerTo').oninput = (e) => { view.setLayerRange(0, +e.target.value); $('layerToLabel').textContent = `Surface to layer ${+e.target.value + 1}`; };
-$('play').onclick = () => { const stop = sim.actions.length ? MAX_DAY : DECISION_DAY; if (playing || sim.simDays < stop) setPlaying(!playing); };
+$('play').onclick = () => { if (playing || sim.simDays < stopAt()) setPlaying(!playing); };
 $('speed').oninput = (e) => { stepsPerFrame = +e.target.value; };
-$('reset').onclick = () => { sim.reset(); $('earnings').textContent = ''; $('dayNote').textContent = ''; setPlaying(true); };
+$('reset').onclick = () => { spillUntil = 0; sim.reset(); $('earnings').textContent = ''; $('dayNote').textContent = ''; setPlaying(true); };
 
 function readScenario() {
   sim.setScenario({ windSpeed: +$('wind').value, windDir: +$('windDir').value, inflowCfs: +$('inflow').value, airTempC: +$('air').value });
@@ -62,11 +64,13 @@ const exec = makeExecutor({ getSim: () => sim, view, onPlanApplied: () => showEa
 // Experiments always start from the same honest setup, whatever the page was doing before.
 function prepareDecisionPoint() {
   setPlaying(false);
+  spillUntil = 0;
   $('wind').value = BLOOM_SEASON.windSpeed; $('windDir').value = BLOOM_SEASON.windDir;
   $('inflow').value = BLOOM_SEASON.inflowCfs; $('air').value = BLOOM_SEASON.airTempC;
   sim.reset();
   readScenario();
   sim.step(24 * DECISION_DAY);
+  drawCompass();
   view.update(sim);
   $('dayNote').textContent = '';
   log('call', `Set up a bloom-season scenario at day ${DECISION_DAY}: ${BLOOM_SEASON.inflowCfs} ft³/s river flow, ${BLOOM_SEASON.airTempC} °C air.`);
@@ -103,6 +107,43 @@ function showEarnings(days = 30) {
 }
 $('earningsBtn').onclick = () => showEarnings();
 
+// Hands-on mode: click the lake to spill oil, drag the compass to change the wind. Both feed the real solver.
+const SPILL_TONNES = 5000;
+function spillAt(i, j) {
+  if (trialRunning) return;
+  sim.addAction({ type: 'oilSpill', i, j, radius: 2, amount: SPILL_TONNES });
+  spillUntil = sim.simDays + 30;
+  view.pulse(i, j);
+  view.setField('L'); $('field').value = 'L'; legend();
+  $('dayNote').textContent = `${SPILL_TONNES.toLocaleString()} t of oil spilled. Drag the wind compass to push it around.`;
+  setPlaying(true);
+}
+view.onLakeClick(spillAt);
+window.twin.spillAt = spillAt;
+
+function setWindFrom(deg) {
+  const d = ((Math.round(deg) % 360) + 360) % 360;
+  $('windDir').value = d;
+  readScenario();
+  drawCompass();
+}
+function drawCompass() {
+  $('compassArrow').style.transform = `rotate(${+$('windDir').value + 180}deg)`;
+  $('compassLabel').textContent = `Wind from ${$('windDir').value}° · ${$('wind').value} m/s`;
+}
+const dial = $('compass');
+const dragWind = (e) => {
+  const b = dial.getBoundingClientRect();
+  // The arrow points where the wind blows, so the wind comes from the opposite side.
+  setWindFrom(Math.atan2(e.clientX - (b.left + b.width / 2), -(e.clientY - (b.top + b.height / 2))) * 180 / Math.PI + 180);
+};
+dial.addEventListener('pointerdown', (e) => { dial.setPointerCapture(e.pointerId); dragWind(e); });
+dial.addEventListener('pointermove', (e) => { if (dial.hasPointerCapture(e.pointerId)) dragWind(e); });
+$('stormWind').oninput = (e) => { $('wind').value = e.target.value; readScenario(); drawCompass(); };
+for (const id of ['wind', 'windDir']) $(id).addEventListener('change', drawCompass);
+drawCompass();
+window.twin.setWindFrom = setWindFrom;
+
 let frame = 0, latestAnalysis = null, latestMetrics = null;
 
 // Optional written commentary from a live model. Off unless ANALYST_PROVIDER is set in aquatic-twin/.env.
@@ -124,10 +165,10 @@ function loop() {
   if (playing && !trialRunning) {
     sim.step(stepsPerFrame);
     // Without a plan the season stops at the decision point. With one, Play shows its effect for 30 more days.
-    const stopDay = sim.actions.length ? MAX_DAY : DECISION_DAY;
+    const stopDay = stopAt();
     if (sim.simDays >= stopDay) {
       setPlaying(false);
-      $('dayNote').textContent = sim.actions.length ? `Plan shown through day ${MAX_DAY}. Press Restart to run again.` : `Day ${DECISION_DAY}: the bloom is building. Run experiments to find a plan.`;
+      $('dayNote').textContent = sim.actions.length ? `Shown through day ${Math.round(stopDay)}. Press Restart to run again.` : `Day ${DECISION_DAY}: the bloom is building. Run experiments, or click the lake to spill oil.`;
     }
   }
   if (!trialRunning) view.update(sim);

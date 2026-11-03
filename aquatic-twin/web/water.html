@@ -51,6 +51,13 @@
   .twin-issues li { padding: 6px 0 6px 10px; border-left: 3px solid #1f8a5b; }
   .twin-issues li.twin-tone-high { border-left-color: #c9352b; } .twin-issues li.twin-tone-medium { border-left-color: #b9770e; }
   .twin-narrative { font-size: 13px; line-height: 1.4; margin: 10px 0 0; }
+  .twin-spillhint { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); color: #fff; font-size: 13px; font-weight: 600; background: rgba(190, 80, 20, .85); padding: 7px 14px; border-radius: 999px; pointer-events: none; white-space: nowrap; }
+  .twin-storm { position: absolute; right: 14px; top: 14px; width: 130px; display: grid; gap: 6px; justify-items: center; color: #fff; background: rgba(8, 28, 38, .72); backdrop-filter: blur(10px); padding: 10px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .14); }
+  #compass { position: relative; width: 74px; height: 74px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .55); cursor: grab; touch-action: none; }
+  #compass span { position: absolute; left: 50%; top: 1px; transform: translateX(-50%); font-size: 10px; opacity: .8; pointer-events: none; }
+  #compassArrow { position: absolute; left: 50%; top: 10px; width: 0; height: 26px; margin-left: -6px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 26px solid #ffb347; transform-origin: 50% 27px; pointer-events: none; }
+  #compassLabel { font-size: 11px; text-align: center; line-height: 1.25; }
+  #stormWind { width: 100%; }
   .twin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .twin-table th, .twin-table td { text-align: left; padding: 4px 6px 4px 0; border-bottom: 1px solid var(--border); }
   @media (max-width: 900px) { .twin { grid-template-columns: 1fr; height: auto; } .twin-stage { height: 60vh; } .twin-side { border-left: 0; } }
@@ -67,6 +74,12 @@
       <div id="twinBadge" hidden>Placeholder lakebed. Run build_scene.py --real for NOAA depths.</div>
     </div>
     <div id="legend"></div>
+    <div class="twin-spillhint">Click the lake to spill oil</div>
+    <div class="twin-storm">
+      <div id="compass" title="Drag to change the wind"><div id="compassArrow"></div><span>N</span></div>
+      <div id="compassLabel"></div>
+      <input id="stormWind" type="range" min="1" max="20" step="0.5" value="4" aria-label="Wind speed" />
+    </div>
   </div>
   <aside class="twin-side">
     <section class="twin-analysis">

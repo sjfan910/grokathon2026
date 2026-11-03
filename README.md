@@ -2,6 +2,8 @@
 
 A live 3D model of Lake Erie, built as a new feature for [Aquatic Sustainability](https://github.com/gt-big-data/aquatic-sustainability) at the BDBI x SpaceXSI Grokathon. It solves transport equations for temperature, phosphorus, algae, oxygen and toxin in the browser. An AI operator tests cleanup plans on the solver to keep Toledo's tap water safe, and the result is presented as an earnings call for the lake.
 
+**Try it:** click anywhere on the lake to spill oil, then drag the wind compass. The currents reroute and the slick, habitat and economic analysis all update live from the solver.
+
 ## Repo layout
 
 | Folder | What it is |

@@ -169,8 +169,11 @@ export function createView(container, scene, labelsEl) {
   bedGeo.computeVertexNormals();
   const bed = new THREE.Mesh(bedGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }));
   world.add(bed);
-  const ground = new THREE.Mesh(new THREE.CircleGeometry(600, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: far, roughness: 1 }));
-  ground.position.y = -0.02;
+  // Ground beyond the mapped area. The hole keeps it from covering the lake.
+  const groundShape = new THREE.Shape([[-600, -600], [600, -600], [600, 600], [-600, 600]].map(([x, y]) => new THREE.Vector2(x, y)));
+  groundShape.holes.push(new THREE.Path([[-W / 2, -D / 2], [-W / 2, D / 2], [W / 2, D / 2], [W / 2, -D / 2]].map(([x, y]) => new THREE.Vector2(x, y))));
+  const ground = new THREE.Mesh(new THREE.ShapeGeometry(groundShape).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: far, roughness: 1 }));
+  ground.position.y = 0.02;
   world.add(ground);
 
   const texData = new Uint8Array(nx * ny * nz);
@@ -242,7 +245,8 @@ export function createView(container, scene, labelsEl) {
       const q = Math.round(s.gx) + nx * Math.round(s.gy);
       s.age++;
       if (s.age > s.life || !(depth_m[q] > 0.5)) { respawn(s); return; }
-      const a = 0.14 * flow.u[q] / top, b = 0.14 * flow.v[q] / top;
+      const gain = 0.14 * Math.min(3, top / 0.06) / top;  // stronger wind, faster streaks
+      const a = gain * flow.u[q], b = gain * flow.v[q];
       s.gx += a; s.gy += b;
       const fade = Math.sin(Math.PI * s.age / s.life) * 0.75;
       const wx = (g) => (g / (nx - 1) - 0.5) * W, wz = (g) => (0.5 - g / (ny - 1)) * D;
@@ -252,6 +256,38 @@ export function createView(container, scene, labelsEl) {
     streakGeo.attributes.position.needsUpdate = true;
     streakGeo.attributes.color.needsUpdate = true;
   }
+
+  // Spill markers: an expanding ring where someone hits the lake.
+  const rings = [];
+  function pulse(i, j) {
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 48).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0xff7a2f, transparent: true, depthWrite: false, fog: false, toneMapped: false }));
+    ring.position.set((i / (nx - 1) - 0.5) * W, 0.08, (0.5 - j / (ny - 1)) * D);
+    ring.renderOrder = nz + 4;
+    world.add(ring);
+    rings.push({ ring, age: 0 });
+  }
+  function stepRings() {
+    for (let n = rings.length - 1; n >= 0; n--) {
+      const r = rings[n];
+      r.age++;
+      r.ring.scale.setScalar(0.2 + r.age * 0.05);
+      r.ring.material.opacity = Math.max(0, 1 - r.age / 90);
+      if (r.age > 90) { world.remove(r.ring); r.ring.geometry.dispose(); r.ring.material.dispose(); rings.splice(n, 1); }
+    }
+  }
+  // A click, not a camera drag, on the water reports its grid cell.
+  const ray = new THREE.Raycaster(), surface = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit = new THREE.Vector3();
+  let lakeClick = null, down = null;
+  renderer.domElement.addEventListener('pointerdown', (e) => { down = [e.clientX, e.clientY]; });
+  renderer.domElement.addEventListener('pointerup', (e) => {
+    if (!down || !lakeClick || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
+    const box = renderer.domElement.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2((e.clientX - box.left) / box.width * 2 - 1, -((e.clientY - box.top) / box.height) * 2 + 1), camera);
+    if (!ray.ray.intersectPlane(surface, hit)) return;
+    const i = Math.round((hit.x / W + 0.5) * (nx - 1)), j = Math.round((0.5 - hit.z / D) * (ny - 1));
+    if (i >= 0 && j >= 0 && i < nx && j < ny && depth_m[i + nx * j] > 0) lakeClick(i, j);
+  });
 
   const pinMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
   const pinGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.5, 8), headGeo = new THREE.SphereGeometry(0.09, 16, 12);
@@ -320,6 +356,7 @@ export function createView(container, scene, labelsEl) {
       if (camera.position.distanceTo(focusTarget.cam) < 0.1) focusTarget = null;
     }
     stepCurrents();
+    stepRings();
     controls.update();
     renderer.render(world, camera);
     const w = container.clientWidth, ht = container.clientHeight;
@@ -329,5 +366,5 @@ export function createView(container, scene, labelsEl) {
     }
   }
   setField('A');
-  return { setField, setExplode, setLayerRange, focus, update, render, get field() { return field; } };
+  return { pulse, onLakeClick(fn) { lakeClick = fn; }, setField, setExplode, setLayerRange, focus, update, render, get field() { return field; } };
 }
