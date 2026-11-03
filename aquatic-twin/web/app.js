@@ -3,6 +3,7 @@ import { createSim } from '/twin/solver.js';
 import { createView, FIELD_STYLE } from '/twin/view.js';
 import { makeExecutor, runOperator, replay } from '/twin/agent.js';
 import { analyze, renderAnalysis } from '/twin/analyst.js';
+import { openLens } from '/twin/lens.js';
 import { earningsCall, renderEarnings, renderFishMarket } from '/twin/econ.js';
 
 const $ = (id) => document.getElementById(id);
@@ -126,7 +127,23 @@ function spillAt(i, j) {
   $('dayNote').textContent = `${SPILL_TONNES.toLocaleString()} t of oil spilled. Drag the wind compass to push it around.`;
   setPlaying(true);
 }
-view.onLakeClick(spillAt);
+let clickMode = 'spill', lastPointer = { x: 0, y: 0 };
+function setMode(mode) {
+  clickMode = mode;
+  $('modeSpill').classList.toggle('on', mode === 'spill');
+  $('modeLens').classList.toggle('on', mode === 'lens');
+}
+$('modeSpill').onclick = () => setMode('spill');
+$('modeLens').onclick = () => setMode('lens');
+$('twinCanvas').addEventListener('pointerdown', (e) => { lastPointer = { x: e.clientX, y: e.clientY }; }, true);
+function lensAt(i, j) {
+  const q = i + scene.nx * j, f = sim.fields;
+  openLens(document.querySelector('.twin-stage'), {
+    oil: f.L[q], oxygen: f.O[q], phosphorus: f.P[q], toxin: f.X[q], temp: f.T[q], depth: scene.depth_m[q],
+  }, lastPointer);
+}
+view.onLakeClick((i, j) => (clickMode === 'lens' ? lensAt(i, j) : spillAt(i, j)));
+window.twin.lensAt = lensAt;
 window.twin.spillAt = spillAt;
 
 function setWindFrom(deg) {

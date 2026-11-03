@@ -51,7 +51,23 @@
   .twin-issues li { padding: 6px 0 6px 10px; border-left: 3px solid #1f8a5b; }
   .twin-issues li.twin-tone-high { border-left-color: #c9352b; } .twin-issues li.twin-tone-medium { border-left-color: #b9770e; }
   .twin-narrative { font-size: 13px; line-height: 1.4; margin: 10px 0 0; }
-  .twin-spillhint { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); color: #fff; font-size: 13px; font-weight: 600; background: rgba(190, 80, 20, .85); padding: 7px 14px; border-radius: 999px; pointer-events: none; white-space: nowrap; }
+  .twin-modes { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(8, 28, 38, .78); backdrop-filter: blur(10px); z-index: 2; }
+  .twin-modes button { border: 0; background: transparent; color: #fff; font: 600 13px system-ui; padding: 6px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+  .twin-modes button.on { background: #c9611f; }
+  .twin-lens { position: absolute; inset: 0; z-index: 5; overflow: hidden; background: #04202f; animation: twinLensIn .55s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes twinLensIn { from { transform: scale(.04); border-radius: 50%; opacity: .4; } to { transform: scale(1); border-radius: 0; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .twin-lens { animation: none; } }
+  .twin-lens canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .twin-lens-close { position: absolute; left: 14px; top: 14px; border: 1px solid rgba(255, 255, 255, .3); background: rgba(8, 28, 38, .8); color: #fff; font: 600 13px system-ui; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+  .twin-lens-card { position: absolute; right: 14px; top: 14px; bottom: 14px; width: min(270px, 44%); overflow-y: auto; padding: 12px; color: #fff; font-size: 12.5px; line-height: 1.35; border-radius: 12px; background: rgba(8, 28, 38, .84); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, .14); }
+  .twin-lens-card h3 { margin: 0 0 8px; font-size: 15px; }
+  .twin-lens-card p { margin: 8px 0 0; }
+  .twin-lens-read { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .twin-lens-read div { display: grid; }
+  .twin-lens-read span { font-size: 10.5px; opacity: .7; }
+  .twin-lens-read b { font: 600 12.5px ui-monospace, Menlo, monospace; }
+  .twin-lens-key { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 4px; }
+  .twin-lens-key i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
   .twin-storm { position: absolute; right: 14px; top: 14px; width: 130px; display: grid; gap: 6px; justify-items: center; color: #fff; background: rgba(8, 28, 38, .72); backdrop-filter: blur(10px); padding: 10px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .14); }
   #compass { position: relative; width: 74px; height: 74px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .55); cursor: grab; touch-action: none; }
   #compass span { position: absolute; left: 50%; top: 1px; transform: translateX(-50%); font-size: 10px; opacity: .8; pointer-events: none; }
@@ -74,7 +90,10 @@
       <div id="twinBadge" hidden>Placeholder lakebed. Run build_scene.py --real for NOAA depths.</div>
     </div>
     <div id="legend"></div>
-    <div class="twin-spillhint">Click the lake to spill oil</div>
+    <div class="twin-modes" role="group" aria-label="What a click on the lake does">
+      <button id="modeSpill" type="button" class="on">Spill oil</button>
+      <button id="modeLens" type="button">Molecular view</button>
+    </div>
     <div class="twin-storm">
       <div id="compass" title="Drag to change the wind"><div id="compassArrow"></div><span>N</span></div>
       <div id="compassLabel"></div>

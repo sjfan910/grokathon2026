@@ -9,6 +9,7 @@ Built for the BDBI x SpaceXSI Grokathon as a new feature for [Aquatic Sustainabi
 - **3D lake on NOAA's real lakebed.** Temperature, phosphorus, algae, oxygen, toxin and oil are solved live in the browser across 12 depth layers, which you can lift apart.
 - **Live currents.** A fluid mechanics PDE turns wind and depth into currents. Live data can load the current Maumee River flow, wind and air temperature.
 - **Spill it yourself.** Click anywhere on the lake to spill oil, then drag the wind compass. The currents reroute and the slick moves.
+- **Molecular view.** Tap any spot to zoom into an illustrative molecular sketch driven by that spot's solver values: hydrogen bonds re-forming, oil being pushed out of the water, and oxygen, phosphate and toxin.
 - **AI operator.** Gemini tests cleanup plans on copies of the solver, compares the results and applies the best one. Every number it quotes comes from a solver run.
 - **Live economic and ecosystem analysis.** Fishing trips, fish habitat, drinking water thresholds and commercial risk update beside the simulation.
 - **The lake's earnings call.** In the plain-language style of SimpliEarn, it shows what a bloom puts at risk and what a plan returns.
