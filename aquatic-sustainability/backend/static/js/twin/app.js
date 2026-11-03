@@ -2,7 +2,7 @@
 import { createSim } from '/static/js/twin/solver.js';
 import { createView, FIELD_STYLE } from '/static/js/twin/view.js';
 import { makeExecutor, runGrok, replay } from '/static/js/twin/agent.js';
-import { earningsCall, renderEarnings } from '/static/js/twin/econ.js';
+import { earningsCall, renderEarnings, renderFishMarket } from '/static/js/twin/econ.js';
 
 const $ = (id) => document.getElementById(id);
 const scene = await (await fetch('/static/js/twin/erie.scene.json')).json();
@@ -73,10 +73,11 @@ $('replay').onclick = async () => {
 function showEarnings(days = 30) {
   const plan = sim.clone(), base = sim.clone();
   const st = base.exportState();
-  st.actions = [];
+  st.actions = st.actions.filter((a) => a.type === 'oilSpill');  // the spill is the incident, not part of the plan
   base.importState(st);
-  const call = earningsCall(base.step(24 * days).metrics(), plan.step(24 * days).metrics());
-  renderEarnings($('earnings'), call, plan.metrics());
+  const mBase = base.step(24 * days).metrics(), mPlan = plan.step(24 * days).metrics();
+  renderEarnings($('earnings'), earningsCall(mBase, mPlan), mPlan);
+  if ($('fishMarket')) renderFishMarket($('fishMarket'), mBase, mPlan);
 }
 $('earningsBtn').onclick = () => showEarnings();
 

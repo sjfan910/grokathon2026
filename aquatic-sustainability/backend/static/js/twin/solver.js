@@ -15,6 +15,13 @@ export const DEFAULT_COEFFS = {
   yX: 0.05, lamX: 0.1, lysisX: 0.05,
   SOD: 2.5, relP: 10, inflowP: 300,
   bloomChl: 20, hypoxicO: 2,
+  // Fish habitat oxygen limit, Arend et al. 2011 (Lake Erie): DOcrit = a + 0.168*T, a = 0.358 for yellow perch.
+  doCritA: 0.358, doCritSlope: 0.168,
+  // Oil (field L, ug/L total oil). SCREENING VALUES, shown as such on screen:
+  // oilDecay 0.05/day biodegradation (assumption); oilO2 3.5 g O2 per g oil (stoichiometry, CH2 + 1.5 O2);
+  // habitat penalty uses PAH fraction 0.02 of oil and EC50 50 ug/L PAH (zebrafish embryo proxy, Incardona 2005, not a walleye LC50);
+  // oilCover: surface oil at which air-water O2 exchange is cut by 90% (assumption).
+  oilDecay: 0.05, oilO2: 3.5, oilPahFrac: 0.02, oilEC50: 50, oilCover: 2000, oilVisible: 10,
 };
 
 // unitCostUsd values are placeholders, shown as such on screen.
@@ -24,9 +31,14 @@ export const ACTIONS = {
   wetland:   { unit: 'ha',         unitCostUsd: 25000, haForHalf: 8000 },
   upstream:  { unit: 'fraction',   unitCostUsd: 2e8 },  // amount 0..0.4, cost per unit fraction per year
   algaecide: { unit: 't algaecide', unitCostUsd: 1500, tScale: 200 },
+  // Oil. oilSpill is an event, not a purchase. Response costs are placeholders scaled from Etkin 2004
+  // (DRAFT, 2002 dollars: ~$150 per gallon of crude with mechanical recovery; 1 t crude ~ 300 gal).
+  oilSpill:   { unit: 't oil spilled', unitCostUsd: 0 },
+  skimmer:    { unit: 't oil recovered', unitCostUsd: 45000, hours: 48 },
+  dispersant: { unit: 't dispersant', unitCostUsd: 8000, oilPerT: 20 },  // trap: cheap, but drives oil into the water column
 };
 
-const STATE_FIELDS = ['T', 'P', 'A', 'O', 'X', 'H'];
+const STATE_FIELDS = ['T', 'P', 'A', 'O', 'X', 'H', 'L'];
 
 export function createSim(scene, opts = {}) {
   const c = { ...DEFAULT_COEFFS, ...(opts.coeffs || {}) };
@@ -94,7 +106,7 @@ export function createSim(scene, opts = {}) {
   }
 
   function reset() {
-    fields.T.fill(0); fields.P.fill(0); fields.A.fill(0); fields.O.fill(0); fields.X.fill(0); fields.H.fill(0);
+    fields.T.fill(0); fields.P.fill(0); fields.A.fill(0); fields.O.fill(0); fields.X.fill(0); fields.H.fill(0); fields.L.fill(0);
     for (const q of wetCols) for (let k = 0; k < nz; k++) {
       const m = q + nCols * k;
       fields.T[m] = 20; fields.P[m] = 8; fields.A[m] = 2; fields.O[m] = 9; fields.X[m] = 0; fields.H[m] = 1;
@@ -209,7 +221,7 @@ export function createSim(scene, opts = {}) {
       factor(q, beta, 0);
       solveColumn(fields.T, q); solveColumn(fields.P, q); solveColumn(fields.O, q); solveColumn(fields.X, q);
       if (rise) factor(q, beta, rise);
-      solveColumn(fields.A, q);
+      solveColumn(fields.A, q); solveColumn(fields.L, q);  // oil floats, like algae (same rise speed: assumption)
     }
   }
 
@@ -270,17 +282,41 @@ export function createSim(scene, opts = {}) {
           fields.X[m] += c.lysisX * killed;
         }
       }
+      if (act.type === 'oilSpill' && !act.done) {  // release into the surface layer of the patch
+        act.done = true;
+        let vol = 0;
+        for (const q of act.cols) vol += area * h[q] / nz;
+        const d = vol > 0 ? act.amount * 1e9 / vol : 0;  // tonnes -> mg, per m3 = ug/L
+        for (const q of act.cols) fields.L[q] += d;
+      }
+      if (act.type === 'skimmer' && act.ageH <= ACTIONS.skimmer.hours) {  // remove surface oil, up to its capacity
+        let mass = 0;
+        for (const q of act.cols) mass += fields.L[q] * area * h[q] / nz / 1e9;
+        const t = act.amount / ACTIONS.skimmer.hours * (dt / 3600);
+        const keep = 1 - Math.min(0.5, mass > 0 ? t / mass : 0);
+        for (const q of act.cols) fields.L[q] *= keep;
+      }
+      if (act.type === 'dispersant' && act.ageH <= 1) {  // spread surface oil through the whole column
+        let mass = 0;
+        for (const q of act.cols) mass += fields.L[q] * area * h[q] / nz / 1e9;
+        const f = Math.min(0.8, mass > 0 ? act.amount * ACTIONS.dispersant.oilPerT / mass : 0);
+        for (const q of act.cols) {
+          const moved = fields.L[q] * f;
+          fields.L[q] -= moved;
+          for (let k = 0; k < nz; k++) fields.L[q + nCols * k] += moved / nz;  // same mass, now in every layer
+        }
+      }
     }
   }
 
   function react() {
-    const dtd = dt / 86400, { T, P, A, O, X, H } = fields;
+    const dtd = dt / 86400, { T, P, A, O, X, H, L } = fields;
     const Ta = scenario.airTempC, ka = (0.5 + 0.03 * scenario.windSpeed ** 2) / 86400;
     for (const q of wetCols) {
       const dz = h[q] / nz;
       for (let k = 0; k < nz; k++) {
         const m = q + nCols * k;
-        let t = T[m], p = Math.max(P[m], 0), al = Math.max(A[m], 0), o = Math.max(O[m], 0), x = Math.max(X[m], 0);
+        let t = T[m], p = Math.max(P[m], 0), al = Math.max(A[m], 0), o = Math.max(O[m], 0), x = Math.max(X[m], 0), oil = Math.max(L[m], 0);
         const I = Math.exp(-(c.ke0 + c.keA * al) * (k + 0.5) * dz);
         const fT = Math.exp(-(((t - c.Topt) / c.Tw) ** 2));
         const mu = c.muMax * fT * (I / (I + c.KI)) * (p / (p + c.Kp));
@@ -289,19 +325,21 @@ export function createSim(scene, opts = {}) {
         p += c.Yp * (c.recycle * die - grow);
         o += c.Yo * (grow - c.respFrac * die);
         x += c.yX * mu * A[m] * dtd - c.lamX * x * dtd;
+        if (oil > 0) { const deg = c.oilDecay * oil * dtd; oil -= deg; o -= c.oilO2 * deg * 1e-3; }
         if (k === 0) {
           t += Math.min(1, c.heatExchange * dt / dz) * (Ta - t);
           const sat = 14.6 - 0.39 * t + 0.007 * t * t;
-          o += Math.min(1, ka * dt / dz) * (sat - o);
+          o += Math.min(1, ka * dt / dz) * (1 - 0.9 * Math.min(1, oil / c.oilCover)) * (sat - o);
         }
         if (k === nz - 1) {
           o -= Math.min(o, c.SOD * fT * (o / (o + 1)) / dz * dtd);
           p += c.relP * Math.max(0, (c.hypoxicO - o) / c.hypoxicO) / dz * dtd;
         }
-        T[m] = t; P[m] = Math.max(p, 0); A[m] = Math.max(al, 0); O[m] = Math.max(o, 0); X[m] = Math.max(x, 0);
-        // TODO(Shija): add burrowing mayfly and use sourced tolerance curves. This one is walleye-like.
-        const fO = Math.min(1, Math.max(0, (o - c.hypoxicO) / 3));
-        H[m] = fO * Math.exp(-(((t - 20) / 6) ** 2));
+        T[m] = t; P[m] = Math.max(p, 0); A[m] = Math.max(al, 0); O[m] = Math.max(o, 0); X[m] = Math.max(x, 0); L[m] = Math.max(oil, 0);
+        // Oxygen limit from Arend et al. 2011 (yellow perch); temperature curve is walleye-like (optimum 20-22 C).
+        const fO = Math.min(1, Math.max(0, o / (c.doCritA + c.doCritSlope * t)));
+        const pah = oil * c.oilPahFrac, fOil = 1 / (1 + (pah / c.oilEC50) ** 2);
+        H[m] = fO * Math.exp(-(((t - 20) / 6) ** 2)) * fOil;
       }
     }
   }
@@ -321,7 +359,7 @@ export function createSim(scene, opts = {}) {
       if (reactions) applySources();
       // Horizontal and vertical stay paired in each substep: that is what keeps a uniform field uniform.
       for (let sub = 0; sub < subH; sub++) {
-        for (const name of ['T', 'P', 'A', 'O', 'X']) horizontal(fields[name]);
+        for (const name of ['T', 'P', 'A', 'O', 'X', 'L']) horizontal(fields[name]);
         vertical();
       }
       if (reactions) { react(); applyActions(); }
@@ -333,8 +371,12 @@ export function createSim(scene, opts = {}) {
 
   function metrics() {
     const km2 = area / 1e6;
-    let hypoxic = 0, bloom = 0, habSum = 0, volSum = 0;
+    let hypoxic = 0, bloom = 0, habSum = 0, volSum = 0, oilKm2 = 0, oilT = 0, oiledHabitatKm2 = 0;
     for (const q of wetCols) {
+      if (fields.L[q] > c.oilVisible) oilKm2 += km2;
+      let oilMax = 0;
+      for (let k = 0; k < nz; k++) { const v = fields.L[q + nCols * k]; oilT += v * area * h[q] / nz / 1e9; oilMax = Math.max(oilMax, v); }
+      if (oilMax * c.oilPahFrac > 0.3 * c.oilEC50) oiledHabitatKm2 += km2;  // habitat cut by roughly 8% or more
       if (fields.O[q + nCols * (nz - 1)] < c.hypoxicO) hypoxic += km2;
       if (fields.A[q] > c.bloomChl) bloom += km2;
       for (let k = 0; k < nz; k++) { habSum += fields.H[q + nCols * k] * h[q]; volSum += h[q]; }
@@ -348,6 +390,8 @@ export function createSim(scene, opts = {}) {
       hypoxicKm2: Math.round(hypoxic), bloomKm2: Math.round(bloom),
       intakeToxin: intake ? +fields.X[intake.i + nx * intake.j + nCols * Math.floor(nz / 2)].toFixed(3) : 0,
       peakIntakeToxin: +peakIntakeToxin.toFixed(3),
+      oilKm2: Math.round(oilKm2), oilTonnes: +oilT.toFixed(1), oiledHabitatKm2: Math.round(oiledHabitatKm2),
+      intakeOil: intake ? +fields.L[intake.i + nx * intake.j + nCols * Math.floor(nz / 2)].toFixed(2) : 0,
       habitatIndex: +(volSum ? habSum / volSum : 0).toFixed(3),
       siteBloomDays: Object.fromEntries(sites.map((s) => [s.id, +s.bloomDays.toFixed(1)])),
       materials,
