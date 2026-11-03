@@ -54,6 +54,7 @@ function headline(call) {
 }
 
 function toxinLine(call) {
+  if (call.spend <= 0) return `<b>Toledo's tap water:</b> toxin at the intake peaks at ${call.before.peakToxin.toFixed(2)} µg/L. The drinking-water limit is ${ANCHORS.referenceToxin} µg/L.`;
   const peak = call.after.peakToxin;
   const verdict = peak >= ANCHORS.referenceToxin ? 'over the limit, so the tap water is not safe to drink' : 'under the limit';
   return `<b>Toledo's tap water:</b> toxin at the intake peaks at ${peak.toFixed(2)} µg/L with this plan, ${verdict} of ${ANCHORS.referenceToxin} µg/L. Doing nothing peaks at ${call.before.peakToxin.toFixed(2)} µg/L.`;
