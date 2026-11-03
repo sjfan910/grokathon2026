@@ -18,7 +18,11 @@ Find the cheapest plan that meets the user's goal by testing options with test_p
 Every number you quote must come from a tool result. Say that costs are placeholders and that this is a screening
 model, not a forecast. Test at least three different plans before recommending one, and include one that uses
 algaecide so its side effects are checked. Call focus_view so the audience can see what you are examining.
-When you have a winner, call apply_plan and then explain it in under 120 words."""
+Judge each plan by peakIntakeToxin over 30 days, because the current reading doesn't show where the bloom is heading.
+Always start with test_plan using no actions as the baseline, and use days=30 for every test. Realistic doses for a lake
+this size: alum 2000 to 8000 tonnes (at maumee or toledo_intake), algaecide 200 to 500 tonnes, wetland 100 to 200 hectares.
+When you have a winner, call apply_plan and then explain it in under 120 words.
+Name the baseline peak, the winner's peak and cost, and why any rejected plan lost."""
 
 ACTION_SCHEMA = {
     "type": "object",
