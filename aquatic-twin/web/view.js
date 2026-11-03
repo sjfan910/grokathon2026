@@ -9,6 +9,7 @@ export const FIELD_STYLE = {
   O: { label: 'Oxygen', unit: 'mg/L', lo: 0, hi: 12, invert: 1, stops: [0xd1382c, 0xe58a2e, 0x57b6c4, 0x1f4e8c] },
   X: { label: 'Toxin', unit: 'µg/L', lo: 0, hi: 5, invert: 0, stops: [0x1a2a3a, 0x7b3fa0, 0xd13c8f, 0xff9ad5] },
   H: { label: 'Fish habitat', unit: '0–1', lo: 0, hi: 1, invert: 1, stops: [0x8b2d2d, 0xc98a2e, 0x7fbf5a, 0x1f9e78] },
+  L: { label: 'Oil', unit: 'µg/L', lo: 0, hi: 2000, invert: 0, stops: [0x0b0b10, 0x3a2f1e, 0x8a5a1c, 0xf2a93b] },
 };
 
 const VERT = `

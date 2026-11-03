@@ -26,11 +26,12 @@ Open http://localhost:5001/water. No API key is needed: without one, a labelled 
 
 - **Measured or live:** lakebed (NOAA NCEI Lake Erie grid, averaged to about 3 km), Maumee River flow (USGS gauge 04193500), wind and air temperature (Open-Meteo).
 - **Assumed:** most solver coefficients, action doses and costs are unfitted screening values, listed below. Splitting the 2014 cost across towns and scaling it with bloom-days are our own assumptions.
+- **Tuned for the demo:** the toxin rates `yX` and `lysisX` and the default scenario are placeholders we set so a day-15 bloom crosses the 1 µg/L limit. They aren't fitted to data.
 - **What this is:** a screening model. It ranks options and is not calibrated to forecast exact values.
 
 ## How we built it
 
-Built with Cursor and Claude Code. Shanjay and Shija worked in Cursor. Kushagra used Claude Code (Opus, Sonnet and Haiku), including for the starter scaffold. The organizers allowed any LLM API in place of the Grok API, so the operator runs on a swappable provider.
+Built with Cursor and Claude Code. Shanjay worked in Cursor. Kushagra and Shija used Claude Code (Opus, Sonnet and Haiku), including for the starter scaffold. The organizers allowed any LLM API in place of the Grok API, so the operator runs on a swappable provider.
 
 ## If we had Grok API access
 

@@ -31,7 +31,7 @@ const sim = createSim(scene);
 const live = flag('live') ? await liveScenario() : {};
 sim.setScenario({ ...JSON.parse(opt('scenario', '{}')), ...live });
 for (const a of JSON.parse(opt('actions', '[]'))) sim.addAction(a);
-const days = +opt('days', 30);
+const days = +opt('days', 45);
 const started = Date.now();
 sim.step(24 * days);
 const metrics = sim.metrics();

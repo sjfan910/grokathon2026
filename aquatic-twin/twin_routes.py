@@ -23,8 +23,8 @@ When you have a winner, call apply_plan and then explain it in under 120 words."
 ACTION_SCHEMA = {
     "type": "object",
     "properties": {
-        "type": {"type": "string", "enum": ["alum", "oxygen", "wetland", "upstream", "algaecide"],
-                 "description": "alum: tonnes, removes phosphorus in a patch. oxygen: tonnes O2/day at the lake bed. wetland: hectares at the river mouth, cuts inflow phosphorus. upstream: fraction 0 to 0.4, cuts inflow phosphorus. algaecide: tonnes, kills algae fast."},
+        "type": {"type": "string", "enum": ["alum", "oxygen", "wetland", "upstream", "algaecide", "oilSpill", "skimmer", "dispersant"],
+                 "description": "alum: tonnes, removes phosphorus in a patch. oxygen: tonnes O2/day at the lake bed. wetland: hectares at the river mouth, cuts inflow phosphorus. upstream: fraction 0 to 0.4, cuts inflow phosphorus. algaecide: tonnes, kills algae fast. oilSpill: tonnes of oil released at the surface (an incident to test, not a plan). skimmer: tonnes of oil removed over 48 h. dispersant: tonnes, pushes surface oil into the water column (cheap, but harms fish habitat)."},
         "site": {"type": "string", "description": "Where to act: toledo_intake, port_clinton, sandusky, cleveland or maumee."},
         "radius": {"type": "number", "description": "Patch radius in grid cells, about 3 km each. Default 4."},
         "amount": {"type": "number", "description": "Size of the action, in the units for its type."},
@@ -45,7 +45,7 @@ FUNCTIONS = [
     ("apply_plan", "Apply the chosen actions to the live model the audience is watching.", {
         "actions": {"type": "array", "items": ACTION_SCHEMA}}, ["actions"]),
     ("focus_view", "Point the 3D view at a field or site.", {
-        "field": {"type": "string", "enum": ["T", "P", "A", "O", "X", "H"]},
+        "field": {"type": "string", "enum": ["T", "P", "A", "O", "X", "H", "L"]},
         "site": {"type": "string"},
         "explode": {"type": "number", "description": "0 keeps layers in place, 1 separates them."}}, []),
 ]

@@ -90,3 +90,21 @@ test('clone is independent, and algaecide spikes toxin at the intake while alum 
   assert.ok(alumM.bloomKm2 <= none.bloomKm2, `alum ${alumM.bloomKm2} vs ${none.bloomKm2}`);
   assert.ok(alumM.planCostUsd > 0);
 });
+
+test('an oil spill spreads, lowers habitat, and skimming beats doing nothing', () => {
+  const base = createSim(erie());
+  base.setScenario({ windSpeed: 7, windDir: 225, inflowCfs: 8000, airTempC: 24 });
+  base.step(24);
+  const spill = base.clone(), skim = base.clone(), disp = base.clone();
+  for (const s of [spill, skim, disp]) s.addAction({ type: 'oilSpill', site: 'sandusky', radius: 2, amount: 5000 });
+  skim.addAction({ type: 'skimmer', site: 'sandusky', radius: 3, amount: 200 });
+  disp.addAction({ type: 'dispersant', site: 'sandusky', radius: 3, amount: 20 });
+  for (const s of [base, spill, skim, disp]) s.step(24 * 5);
+  const [b, o, k, d] = [base, spill, skim, disp].map((s) => s.metrics());
+  assert.ok(o.oilTonnes > 1000 && o.oilTonnes < 5000, `oil left after 5 days: ${o.oilTonnes} t`);
+  assert.ok(o.oilKm2 > 0, 'slick is visible');
+  assert.ok(o.oiledHabitatKm2 > b.oiledHabitatKm2, `oil harms habitat over ${o.oiledHabitatKm2} km2`);
+  console.log('oil metrics', JSON.stringify({ spill: o, skim: k, disp: d }, ['oilTonnes', 'oilKm2', 'oiledHabitatKm2', 'intakeOil', 'habitatIndex', 'hypoxicKm2', 'planCostUsd', 'spill', 'skim', 'disp']));
+  assert.ok(k.oilTonnes < o.oilTonnes, 'skimming removes oil');
+  assert.ok(Number.isFinite(d.habitatIndex) && d.oilKm2 <= o.oilKm2, 'dispersant clears the surface');
+});

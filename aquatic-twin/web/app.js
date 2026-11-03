@@ -2,7 +2,7 @@
 import { createSim } from '/twin/solver.js';
 import { createView, FIELD_STYLE } from '/twin/view.js';
 import { makeExecutor, runOperator, replay } from '/twin/agent.js';
-import { earningsCall, renderEarnings } from '/twin/econ.js';
+import { earningsCall, renderEarnings, renderFishMarket } from '/twin/econ.js';
 
 const $ = (id) => document.getElementById(id);
 const scene = await (await fetch('/twin/erie.scene.json')).json();
@@ -25,7 +25,7 @@ legend();
 $('explode').oninput = (e) => view.setExplode(+e.target.value);
 $('layerTo').max = scene.nz - 1; $('layerTo').value = scene.nz - 1;
 $('layerTo').oninput = (e) => { view.setLayerRange(0, +e.target.value); $('layerToLabel').textContent = `Surface to layer ${+e.target.value + 1}`; };
-$('play').onclick = () => setPlaying(!playing);
+$('play').onclick = () => { const stop = sim.actions.length ? MAX_DAY : DECISION_DAY; if (playing || sim.simDays < stop) setPlaying(!playing); };
 $('speed').oninput = (e) => { stepsPerFrame = +e.target.value; };
 $('reset').onclick = () => { sim.reset(); $('earnings').textContent = ''; $('dayNote').textContent = ''; setPlaying(true); };
 
@@ -94,10 +94,11 @@ $('replay').onclick = async () => {
 function showEarnings(days = 30) {
   const plan = sim.clone(), base = sim.clone();
   const st = base.exportState();
-  st.actions = [];
+  st.actions = st.actions.filter((a) => a.type === 'oilSpill');  // the spill is the incident, not part of the plan
   base.importState(st);
-  const call = earningsCall(base.step(24 * days).metrics(), plan.step(24 * days).metrics());
-  renderEarnings($('earnings'), call, plan.metrics());
+  const mBase = base.step(24 * days).metrics(), mPlan = plan.step(24 * days).metrics();
+  renderEarnings($('earnings'), earningsCall(mBase, mPlan), mPlan);
+  if ($('fishMarket')) renderFishMarket($('fishMarket'), mBase, mPlan);
 }
 $('earningsBtn').onclick = () => showEarnings();
 
@@ -105,7 +106,12 @@ let frame = 0;
 function loop() {
   if (playing && !trialRunning) {
     sim.step(stepsPerFrame);
-    if (sim.simDays >= MAX_DAY) { setPlaying(false); $('dayNote').textContent = `Paused at day ${MAX_DAY}. Press Restart to run the season again.`; }
+    // Without a plan the season stops at the decision point. With one, Play shows its effect for 30 more days.
+    const stopDay = sim.actions.length ? MAX_DAY : DECISION_DAY;
+    if (sim.simDays >= stopDay) {
+      setPlaying(false);
+      $('dayNote').textContent = sim.actions.length ? `Plan shown through day ${MAX_DAY}. Press Restart to run again.` : `Day ${DECISION_DAY}: the bloom is building. Run experiments to find a plan.`;
+    }
   }
   if (!trialRunning) view.update(sim);
   if (frame++ % 15 === 0) {
