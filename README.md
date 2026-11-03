@@ -12,14 +12,31 @@ Everything new is in `aquatic-sustainability/backend`: `static/js/twin/` (solver
 
 ## What's measured and what's assumed
 
-- **Measured or live:** Maumee River flow (USGS gauge 04193500), wind and air temperature (Open-Meteo).
-- **Assumed:** solver coefficients, action doses and costs are screening values until sourced below. Damage scaling is our own assumption, anchored to the 2014 Toledo event.
+- **Measured or live:** lakebed (NOAA NCEI Lake Erie grid, averaged to about 3 km), Maumee River flow (USGS gauge 04193500), wind and air temperature (Open-Meteo).
+- **Assumed:** most solver coefficients, action doses and costs are unfitted screening values, listed below. Splitting the 2014 cost across towns and scaling it with bloom-days are our own assumptions.
 - **What this is:** a screening model. It ranks options and is not calibrated to forecast exact values.
 
 ## How we built it
 
-Built with Claude Code (Opus, Sonnet and Haiku), including the starter scaffold. TODO: describe truthfully how the team used the Grok API and Grok Bot, with screenshots.
+Built with Claude Code (Opus, Sonnet and Haiku), including the starter scaffold, not Cursor. TODO: describe truthfully how the team used the Grok API and Grok Bot, with screenshots.
 
 ## Coefficient sources
 
-TODO (Shija).
+| Value | Used as | Status | Source |
+| --- | --- | --- | --- |
+| Lakebed depth | `erie.scene.json`, max 61.5 m after averaging | Sourced | [NOAA NCEI Lake Erie bathymetry](https://www.ngdc.noaa.gov/mgg/greatlakes/erie.html) |
+| 2014 bloom cost | $65M: $18M property, $20M tourism, $23M recreation, $4M water treatment | Sourced | [Bingham, Sinha & Lupi (2015), for the International Joint Commission](https://www.ectinc.com/wp-content/uploads/2019/05/Economic-Benefits-Due-to-Reduction-in-HABs-an-ECT-Report.pdf), p.3 |
+| 2014 bloom severity | Toledo 10.25, Port Clinton 4.75 and Sandusky 2.75 severity-weeks | Sourced, then summed by us | Same report, Tables 3-6 to 3-9 (Lucas, Ottawa mainland and Erie mainland) |
+| Toxin limit | Microcystin 1 µg/L | Sourced | [WHO guideline, as reported by the Toledo Blade](https://www.toledoblade.com/local/2014/08/04/Mayor-Collins-Our-water-is-safe.print) |
+| Hypoxic threshold | Oxygen below 2 mg/L | Sourced | [NOAA GLERL](https://www.glerl.noaa.gov/res/HABs_and_Hypoxia/hypoxiaWarningSystem.html) |
+| Upstream cut limit | Up to 40% of inflow phosphorus | Sourced | [US EPA, 2016 binational targets](https://www.epa.gov/archive/epa/newsreleases/governments-canada-and-united-states-announce-phosphorus-reduction-targets-40-percent.html) |
+| Town split and bloom-day scaling | Damage in `econ.js`, capped at 2 events (treatment at 3) | **Our assumption** | Built from the sourced figures above, not published |
+| Algae, light and nutrient rates | `muMax`, `death`, `Topt`, `Tw`, `Kp`, `ke0`, `keA`, `KI`, `riseMperDay`, `Yp`, `recycle` | **Placeholder** | None yet |
+| Oxygen and sediment | `Yo`, `respFrac`, `SOD`, `relP` | **Placeholder** | None yet |
+| Toxin rates | `yX`, `lamX`, `lysisX` | **Placeholder** | None yet |
+| Maumee phosphorus concentration | `inflowP` 300 µg/L | **Placeholder** | None yet |
+| Bloom threshold | `bloomChl` 20 µg/L | **Placeholder** | None yet |
+| Mixing and flow | `Kh`, `r`, `driftFrac`, `Cd`, `KzMin`, `heatExchange` | **Placeholder** | None yet |
+| Action costs and doses | `ACTIONS` in `solver.js` | **Placeholder** | None yet |
+
+The $65M covers western Lake Erie in both the US and Canada, and the report describes its tourism figure as indicative. The model's bounds also include Lake St. Clair, which is real water but receives no modelled inflow.
