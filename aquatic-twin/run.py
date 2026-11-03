@@ -19,6 +19,7 @@ WEB = HERE / "web"
 load_dotenv(HERE / ".env")
 os.environ.setdefault("SECRET_KEY", secrets.token_hex(32))
 sys.path[:0] = [str(BACKEND), str(HERE)]
+os.chdir(BACKEND)  # Aquatic loads its data files relative to backend/
 
 # Aquatic's routes import its flood model, and so torch, at startup. Defer that until a flood request.
 tasks = types.ModuleType("app.tasks")
