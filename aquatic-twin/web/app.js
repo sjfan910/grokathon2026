@@ -81,7 +81,15 @@ $('grokForm').onsubmit = async (e) => {
   if (trialRunning) return;
   trialRunning = true;
   prepareDecisionPoint();
-  try { await runOperator($('goal').value, exec, log); showEarnings(); } catch (err) { log('error', err.message); }
+  try {
+    await runOperator($('goal').value, exec, log);
+  } catch (err) {
+    log('error', `${err.message} Showing a saved run instead.`);
+    prepareDecisionPoint();
+    const saved = await (await fetch('/twin/saved-run.json')).json();
+    await replay(saved, exec, log);
+  }
+  showEarnings();
   trialRunning = false;
 };
 $('replay').onclick = async () => {
@@ -150,8 +158,11 @@ let frame = 0, latestAnalysis = null, latestMetrics = null;
 fetch('/api/twin/provider').then((r) => r.json()).then((p) => {
   if (!p.analyst || p.analyst === 'local') return;
   $('analystNote').textContent = `Engine: local rules, with commentary from ${p.analystLabel}. Dollar figures rest on published anchors and labelled assumptions.`;
+  let askedDay = -1;
   const ask = async () => {
-    if (!latestMetrics) return;
+    // Only spend a call when the lake has actually changed.
+    if (!latestMetrics || latestMetrics.simDays === askedDay) return;
+    askedDay = latestMetrics.simDays;
     try {
       const r = await fetch('/api/twin/analysis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ metrics: latestMetrics, issues: latestAnalysis.issues }) });
       const d = await r.json();
@@ -159,7 +170,7 @@ fetch('/api/twin/provider').then((r) => r.json()).then((p) => {
     } catch { /* the local panel keeps working */ }
   };
   ask();
-  setInterval(ask, 20000);
+  setInterval(ask, 30000);
 }).catch(() => {});
 function loop() {
   if (playing && !trialRunning) {

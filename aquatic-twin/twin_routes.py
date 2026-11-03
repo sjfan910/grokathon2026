@@ -105,9 +105,20 @@ def _mock_turn(state, results):
             f"against {base['peakIntakeToxin']} µg/L for doing nothing. Costs are placeholders and this is a screening model, not a forecast."), []
 
 
-def _gemini_turn(state, results):
+def _gemini_call(payload):
+    """Tries the main model, then the backup, because Gemini returns 503 when a model is busy."""
     base = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
-    model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+    models = [os.getenv("GEMINI_MODEL", "gemini-3.8-flash"), os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.1-flash-lite")]
+    error = None
+    for model in models:
+        try:
+            return _post(f"{base}/models/{model}:generateContent", {"x-goog-api-key": os.environ["GEMINI_API_KEY"]}, payload)
+        except RuntimeError as e:
+            error = e
+    raise error
+
+
+def _gemini_turn(state, results):
     if results:
         state["contents"].append({"role": "user", "parts": [
             {"functionResponse": {"name": r["name"], "response": {"result": r["output"]}}} for r in results]})
@@ -117,7 +128,7 @@ def _gemini_turn(state, results):
         if props:
             d["parameters"] = _schema(props, req)
         decls.append(d)
-    data = _post(f"{base}/models/{model}:generateContent", {"x-goog-api-key": os.environ["GEMINI_API_KEY"]}, {
+    data = _gemini_call({
         "systemInstruction": {"parts": [{"text": SYSTEM}]},
         "contents": state["contents"], "tools": [{"functionDeclarations": decls}]})
     content = data["candidates"][0]["content"]
@@ -172,10 +183,7 @@ Do not invent numbers. Say "the model" rather than stating anything as observed 
 
 
 def _gemini_analyst(data):
-    base = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
-    model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
-    res = _post(f"{base}/models/{model}:generateContent", {"x-goog-api-key": os.environ["GEMINI_API_KEY"]},
-                {"contents": [{"role": "user", "parts": [{"text": ANALYST_PROMPT + json.dumps(data)}]}]})
+    res = _gemini_call({"contents": [{"role": "user", "parts": [{"text": ANALYST_PROMPT + json.dumps(data)[:4000]}]}]})
     return "".join(p.get("text", "") for p in res["candidates"][0]["content"].get("parts", []))
 
 

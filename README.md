@@ -1,8 +1,21 @@
 # Aquatic Twin
 
-A live 3D model of Lake Erie, built as a new feature for [Aquatic Sustainability](https://github.com/gt-big-data/aquatic-sustainability) at the BDBI x SpaceXSI Grokathon. It solves transport equations for temperature, phosphorus, algae, oxygen and toxin in the browser. An AI operator tests cleanup plans on the solver to keep Toledo's tap water safe, and the result is presented as an earnings call for the lake.
+**A live 3D digital twin of Lake Erie. Pollute it anywhere, change the wind, and watch the water, the fish and the local economy respond.**
 
-**Try it:** click anywhere on the lake to spill oil, then drag the wind compass. The currents reroute and the slick, habitat and economic analysis all update live from the solver.
+Built for the BDBI x SpaceXSI Grokathon as a new feature for [Aquatic Sustainability](https://github.com/gt-big-data/aquatic-sustainability), which had no working water quality tool. In 2014, about half a million people around Toledo were told not to drink their tap water because of a bloom in this lake. Aquatic Twin shows how a crisis like that unfolds, what it costs, and which response works.
+
+## What it does
+
+- **3D lake on NOAA's real lakebed.** Temperature, phosphorus, algae, oxygen, toxin and oil are solved live in the browser across 12 depth layers, which you can lift apart.
+- **Live currents.** A fluid mechanics PDE turns wind and depth into currents. Live data can load the current Maumee River flow, wind and air temperature.
+- **Spill it yourself.** Click anywhere on the lake to spill oil, then drag the wind compass. The currents reroute and the slick moves.
+- **AI operator.** Gemini tests cleanup plans on copies of the solver, compares the results and applies the best one. Every number it quotes comes from a solver run.
+- **Live economic and ecosystem analysis.** Fishing trips, fish habitat, drinking water thresholds and commercial risk update beside the simulation.
+- **The lake's earnings call.** In the plain-language style of SimpliEarn, it shows what a bloom puts at risk and what a plan returns.
+
+## How the physics works
+
+Each substance follows the advection-diffusion-reaction equation, `∂C/∂t + u·∇C = ∇·(K∇C) + S − λC + R(C)`. Currents come from a wind-driven streamfunction solved on the real depth grid, `∇·(h⁻²∇ψ) = (1/r) ∇×(τ/ρh)`, which conserves water volume. The solver runs on a 128 × 48 × 12 grid with 1-hour steps. It takes about 1.5 seconds for 30 simulated days, which is what lets the AI test several plans in one reply. Six automated tests cover diffusion against the analytic answer, mass conservation, wind direction, bloom growth and oil.
 
 ## Repo layout
 
@@ -20,30 +33,32 @@ pip install -r aquatic-twin/requirements.txt
 python aquatic-twin/run.py
 ```
 
-Open http://localhost:5001/water. No API key is needed: without one, a labelled simulated operator runs real solver trials on a fixed list of plans. To use a live model, copy `aquatic-twin/.env.example` to `aquatic-twin/.env` and set `LLM_PROVIDER` to `gemini`, `anthropic` or `xai` with its key.
+Open http://localhost:5001/water. It runs without a key, using a labelled simulated operator. For the live AI, copy `aquatic-twin/.env.example` to `aquatic-twin/.env`, then set `LLM_PROVIDER=gemini`, `ANALYST_PROVIDER=gemini` and your `GEMINI_API_KEY`.
 
 **Test it:** `node --test aquatic-twin/web/solver.test.js`
 
 ## What's measured and what's assumed
 
-- **Measured or live:** lakebed (NOAA NCEI Lake Erie grid, averaged to about 3 km), Maumee River flow (USGS gauge 04193500), wind and air temperature (Open-Meteo).
-- **Assumed:** most solver coefficients, action doses and costs are unfitted screening values, listed below. Splitting the 2014 cost across towns and scaling it with bloom-days are our own assumptions.
-- **Tuned for the demo:** the toxin rates `yX` and `lysisX` and the default scenario are placeholders we set so a day-15 bloom crosses the 1 µg/L limit. They aren't fitted to data.
-- **What this is:** a screening model. It ranks options and is not calibrated to forecast exact values.
+- **Measured or live:** the lakebed (NOAA NCEI grid, averaged to about 3 km), Maumee River flow (USGS gauge 04193500), wind and air temperature (Open-Meteo).
+- **Assumed:** most solver coefficients, action doses and costs are unfitted screening values, listed below. Splitting costs across towns and scaling them with bloom-days are our own assumptions.
+- **Tuned for the demo:** the toxin rates `yX` and `lysisX` and the default scenario are set so a day-15 bloom crosses the 1 µg/L limit. They aren't fitted to data.
+- **What this is:** a screening model. It ranks options and doesn't forecast exact values.
 
 ## How we built it
 
-Built with Cursor and Claude Code. Shanjay worked in Cursor. Kushagra and Shija used Claude Code (Opus, Sonnet and Haiku), including for the starter scaffold. The organizers allowed any LLM API in place of the Grok API, so the operator runs on a swappable provider.
+Built with Cursor and Claude Code. Shanjay worked in Cursor. Kushagra and Shija used Claude Code (Opus, Sonnet and Haiku), including for the starter scaffold. The organizers allowed any LLM API in place of the Grok API, so the operator uses Gemini through a swappable provider layer.
 
-## If we had Grok API access
+## The Grok version: what we'd build with access
 
-We didn't have Grok API or Grok Bot access tonight. The `xai` provider in `aquatic-twin/twin_routes.py` is written from xAI's docs but has never been run. With access, we would have:
+Grok API and Grok Bot access weren't available tonight, so none of this is running. A Grok provider is written in `aquatic-twin/twin_routes.py` from xAI's docs, but it has never been run. Our plan uses capabilities specific to the Grok stack:
 
-- **Run the operator on `grok-4.7`** with function calling, so Grok designs and compares experiments on the solver.
-- **Added live field reports** with `x_search` and `web_search`, so posts and news about a bloom set the starting scenario, with citations.
-- **Built a Lake Watch Bot on Grok Bot.** A scheduled routine would run `aquatic-twin/web/headless.js --live` on the Bot's cloud computer and message a person for approval only when forecast toxin at the Toledo intake crosses 1 µg/L.
-- **Made the live analysis agentic.** The panel runs on local rules, with optional Gemini commentary. A placeholder for Grok, `_grok_analyst` in `aquatic-twin/twin_routes.py`, marks where `x_search` and `web_search` would check the model against posts and news about blooms, fish kills and beach closures.
-- **Let anyone report a bloom on X.** Tagging `@bot` under a bloom photo would hand the post to the same routine.
+- **Three-agent lake team.** `grok-4.20-multi-agent` runs a hydrologist, an ecologist and an economist that argue over one plan, each calling the solver as a tool.
+- **X as a field sensor.** `x_search` watches posts from anglers, charter captains and beach-goers. Reports of green water or fish kills become timestamped evidence, compared against the model's plume, with citations.
+- **Self-calibration.** Grok's code execution tool fits solver coefficients against Water Quality Portal data, then reruns the tests before accepting a change.
+- **Regulation-aware plans.** Collections Search over Ohio drinking water rules, the US-Canada phosphorus targets and fishery disaster criteria, so every plan says which rule it triggers.
+- **The solver as a remote tool.** A Remote MCP server exposes `test_plan`, so any Grok agent can run lake experiments.
+- **Lake Watch on Grok Bot.** A persistent Bot runs `headless.js --live` on its cloud computer every two hours and stops for human approval when forecast toxin crosses 1 µg/L. A webhook could wake it the moment the river gauge spikes.
+- **Report a bloom on X.** Tag `@bot` under a photo of green water. The Bot receives the post and photos, runs the forecast and sends the result to a person, with a voice memo for operators in the field.
 
 ## Coefficient sources
 

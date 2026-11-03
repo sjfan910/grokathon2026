@@ -302,7 +302,7 @@ export function createView(container, scene, labelsEl) {
     el.className = 'twin-label';
     el.textContent = s.id.replace(/_intake$/, ' intake').replace(/_/g, ' ');
     labelsEl.appendChild(el);
-    return { p, el };
+    return { p, el, dy: { maumee: -30, port_clinton: 34 }[s.id] || 0 };
   });
 
   let field = 'A', focusTarget = null, explodeNow = 0;
@@ -362,7 +362,7 @@ export function createView(container, scene, labelsEl) {
     const w = container.clientWidth, ht = container.clientHeight;
     for (const l of labels) {
       v.copy(l.p).project(camera);
-      l.el.style.transform = `translate(-50%, -130%) translate(${(v.x + 1) / 2 * w}px, ${(1 - v.y) / 2 * ht}px)`;
+      l.el.style.transform = `translate(-50%, -130%) translate(${(v.x + 1) / 2 * w}px, ${(1 - v.y) / 2 * ht + l.dy}px)`;
     }
   }
   setField('A');
