@@ -30,7 +30,7 @@ Open http://localhost:5001/water. No API key is needed: without one, a labelled 
 
 ## How we built it
 
-Built with Claude Code (Opus, Sonnet and Haiku), including the starter scaffold. The organizers allowed any LLM API in place of the Grok API, so the operator runs on a swappable provider.
+Built with Cursor and Claude Code. Shanjay and Shija worked in Cursor. Kushagra used Claude Code (Opus, Sonnet and Haiku), including for the starter scaffold. The organizers allowed any LLM API in place of the Grok API, so the operator runs on a swappable provider.
 
 ## If we had Grok API access
 
