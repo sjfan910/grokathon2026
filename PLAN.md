@@ -118,7 +118,7 @@ Commit every 10 minutes. If you need a change in someone else's file, say it out
 | --- | --- | --- |
 | 0:00 | `/water`, lake at rest | "In 2014, about half a million people around Toledo were told not to drink their tap water because of a bloom in this lake." |
 | 0:20 | Play. Load today's river and wind. Separate the layers. | "Real lakebed, live river gauge, live wind, and transport equations solved on a 3D grid in this tab." |
-| 0:50 | **Press Pause near day 15**, because timing matters: after about day 25, no plan under budget meets the limit. Ask the operator. It tests plans while the camera follows. Algaecide spikes toxin and gets dropped. | "The operator runs the experiments itself. Every number it quotes comes from a solver run." |
+| 0:50 | Click Run experiments. It sets up a bloom-season scenario at day 15 by itself, so no manual timing. It tests plans while the camera follows. Algaecide spikes toxin and gets dropped. | "The operator runs the experiments itself. Every number it quotes comes from a solver run." |
 | 1:40 | Habitat field. Earnings call panel. | "We treated the lake like a company. Here's what the bloom costs and what this plan returns." |
 | 2:45 | Navbar link, repo. | "This is the water quality piece Aquatic Sustainability was missing. It's a screening model, and the README says what's measured and what's assumed." |
 

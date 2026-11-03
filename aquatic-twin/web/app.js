@@ -13,6 +13,9 @@ window.twin = { sim, view };
 if (scene.placeholder) $('twinBadge').hidden = false;
 fetch('/api/twin/provider').then((r) => r.json()).then((p) => { $('operatorTitle').textContent = `AI operator: ${p.label}`; }).catch(() => {});
 let playing = true, stepsPerFrame = 1;
+// The decision point: a fresh bloom hasn't peaked before about day 15, and past about day 25 no plan under budget works.
+const BLOOM_SEASON = { windSpeed: 4, windDir: 225, inflowCfs: 8000, airTempC: 27 }, DECISION_DAY = 15, MAX_DAY = 45;
+function setPlaying(on) { playing = on; $('play').textContent = on ? 'Pause' : 'Play'; }
 
 for (const [name, st] of Object.entries(FIELD_STYLE)) $('field').add(new Option(st.label, name));
 $('field').value = 'A';
@@ -22,9 +25,9 @@ legend();
 $('explode').oninput = (e) => view.setExplode(+e.target.value);
 $('layerTo').max = scene.nz - 1; $('layerTo').value = scene.nz - 1;
 $('layerTo').oninput = (e) => { view.setLayerRange(0, +e.target.value); $('layerToLabel').textContent = `Surface to layer ${+e.target.value + 1}`; };
-$('play').onclick = () => { playing = !playing; $('play').textContent = playing ? 'Pause' : 'Play'; };
+$('play').onclick = () => setPlaying(!playing);
 $('speed').oninput = (e) => { stepsPerFrame = +e.target.value; };
-$('reset').onclick = () => { sim.reset(); };
+$('reset').onclick = () => { sim.reset(); $('earnings').textContent = ''; $('dayNote').textContent = ''; setPlaying(true); };
 
 function readScenario() {
   sim.setScenario({ windSpeed: +$('wind').value, windDir: +$('windDir').value, inflowCfs: +$('inflow').value, airTempC: +$('air').value });
@@ -55,9 +58,24 @@ const log = (kind, text) => {
 };
 const exec = makeExecutor({ getSim: () => sim, view, onPlanApplied: () => showEarnings() });
 
+// Experiments always start from the same honest setup, whatever the page was doing before.
+function prepareDecisionPoint() {
+  setPlaying(false);
+  $('wind').value = BLOOM_SEASON.windSpeed; $('windDir').value = BLOOM_SEASON.windDir;
+  $('inflow').value = BLOOM_SEASON.inflowCfs; $('air').value = BLOOM_SEASON.airTempC;
+  sim.reset();
+  readScenario();
+  sim.step(24 * DECISION_DAY);
+  view.update(sim);
+  $('dayNote').textContent = '';
+  log('call', `Set up a bloom-season scenario at day ${DECISION_DAY}: ${BLOOM_SEASON.inflowCfs} ft³/s river flow, ${BLOOM_SEASON.airTempC} °C air.`);
+}
+
 $('grokForm').onsubmit = async (e) => {
   e.preventDefault();
+  if (trialRunning) return;
   trialRunning = true;
+  prepareDecisionPoint();
   try { await runOperator($('goal').value, exec, log); showEarnings(); } catch (err) { log('error', err.message); }
   trialRunning = false;
 };
@@ -65,9 +83,11 @@ $('replay').onclick = async () => {
   let run = null;
   try { run = JSON.parse(localStorage.getItem('twinLastRun')); } catch { /* fall through to the file */ }
   if (!run) { const r = await fetch('/twin/saved-run.json'); run = r.ok ? await r.json() : null; }
-  if (!run) { log('error', 'No saved run yet. Finish one Grok run first.'); return; }
+  if (!run) { log('error', 'No saved run yet. Finish one operator run first.'); return; }
+  if (trialRunning) return;
   trialRunning = true;
-  await replay(run, exec, log); showEarnings();
+  prepareDecisionPoint();
+  try { await replay(run, exec, log); showEarnings(); } catch (err) { log('error', err.message); }
   trialRunning = false;
 };
 
@@ -83,7 +103,10 @@ $('earningsBtn').onclick = () => showEarnings();
 
 let frame = 0;
 function loop() {
-  if (playing && !trialRunning) sim.step(stepsPerFrame);
+  if (playing && !trialRunning) {
+    sim.step(stepsPerFrame);
+    if (sim.simDays >= MAX_DAY) { setPlaying(false); $('dayNote').textContent = `Paused at day ${MAX_DAY}. Press Restart to run the season again.`; }
+  }
   if (!trialRunning) view.update(sim);
   if (frame++ % 15 === 0) {
     const m = sim.metrics();
