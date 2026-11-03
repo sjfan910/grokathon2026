@@ -72,13 +72,13 @@ Grok API and Grok Bot access weren't available tonight, so none of this is runni
 | Hypoxic threshold | Oxygen below 2 mg/L | Sourced | [NOAA GLERL](https://www.glerl.noaa.gov/res/HABs_and_Hypoxia/hypoxiaWarningSystem.html) |
 | Upstream cut limit | Up to 40% of inflow phosphorus | Sourced | [US EPA, 2016 binational targets](https://www.epa.gov/archive/epa/newsreleases/governments-canada-and-united-states-announce-phosphorus-reduction-targets-40-percent.html) |
 | Town split and bloom-day scaling | Damage in `econ.js`, capped at 2 events (treatment at 3) | **Our assumption** | Built from the sourced figures above, not published |
-| Algae, light and nutrient rates | `muMax`, `death`, `Topt`, `Tw`, `Kp`, `ke0`, `keA`, `KI`, `riseMperDay`, `Yp`, `recycle` | **Placeholder** | None yet |
-| Oxygen and sediment | `Yo`, `respFrac`, `SOD`, `relP` | **Placeholder** | None yet |
-| Toxin rates | `yX`, `lamX`, `lysisX` | **Placeholder** | None yet |
-| Maumee phosphorus concentration | `inflowP` 300 µg/L | **Placeholder** | None yet |
-| Bloom threshold | `bloomChl` 20 µg/L | **Placeholder** | None yet |
-| Mixing and flow | `Kh`, `r`, `driftFrac`, `Cd`, `KzMin`, `heatExchange` | **Placeholder** | None yet |
-| Action costs and doses | `ACTIONS` in `solver.js` | **Placeholder** | None yet |
+| Algae, light and nutrient rates | `muMax`, `death`, `Topt`, `Tw`, `Kp`, `ke0`, `keA`, `KI`, `riseMperDay`, `Yp`, `recycle` | **Placeholder** | Will have once we use grok API |
+| Oxygen and sediment | `Yo`, `respFrac`, `SOD`, `relP` | **Placeholder** | Will have once we use grok API |
+| Toxin rates | `yX`, `lamX`, `lysisX` | **Placeholder** | Will have once we use grok API |
+| Maumee phosphorus concentration | `inflowP` 300 µg/L | **Placeholder** | Will have once we use grok API |
+| Bloom threshold | `bloomChl` 20 µg/L | **Placeholder** | Will have once we use grok API |
+| Mixing and flow | `Kh`, `r`, `driftFrac`, `Cd`, `KzMin`, `heatExchange` | **Placeholder** | Will have once we use grok API |
+| Action costs and doses | `ACTIONS` in `solver.js` | **Placeholder** | Will have once we use grok API |
 | Ohio toxin thresholds | Microcystin 0.3 µg/L (children, sensitive groups) and 1.6 µg/L (everyone) | **Cited, not verified** | Ohio OAC 3745-90-02 |
 | Fishery disaster trigger | Fishing revenue loss of 35% or more | **Cited, not verified** | NOAA, Magnuson-Stevens Act Sec. 312(a) |
 | Ohio boat trips | 251,700 walleye and yellow perch trips, 2024 | **Cited, not verified** | ODNR creel data, from team notes |
