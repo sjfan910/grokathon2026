@@ -15,15 +15,15 @@
   .twin-stage { position: relative; min-width: 0; background: #07141b; overflow: hidden; }
   #twinCanvas { position: absolute; inset: 0; }
   #twinLabels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-  .twin-label { position: absolute; left: 0; top: 0; color: #fff; font: 600 12px system-ui; text-shadow: 0 1px 3px #000; padding-left: 8px; white-space: nowrap; }
+  .twin-label { position: absolute; left: 0; top: 0; color: #fff; font: 600 11.5px system-ui; padding: 3px 8px; border-radius: 999px; background: rgba(8, 28, 38, .72); backdrop-filter: blur(6px); white-space: nowrap; text-transform: capitalize; }
   .twin-hud { position: absolute; left: 14px; top: 14px; right: 14px; display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none; }
   .twin-hud > * { pointer-events: auto; }
-  #metrics { display: flex; flex-wrap: wrap; gap: 14px; background: rgba(5, 18, 25, .78); color: #fff; padding: 8px 12px; border-radius: 8px; }
+  #metrics { display: flex; flex-wrap: wrap; gap: 18px; background: rgba(8, 28, 38, .72); backdrop-filter: blur(10px); color: #fff; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .14); }
   #metrics div { display: grid; }
   #metrics span { font-size: 11px; opacity: .75; }
   #metrics b { font: 600 15px ui-monospace, Menlo, monospace; }
   #twinBadge { background: #a1520c; color: #fff; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 8px; align-self: flex-start; }
-  #legend { position: absolute; left: 14px; bottom: 14px; color: #fff; font-size: 13px; background: rgba(5, 18, 25, .78); padding: 6px 10px; border-radius: 8px; }
+  #legend { position: absolute; left: 14px; bottom: 14px; color: #fff; font-size: 13px; background: rgba(8, 28, 38, .72); backdrop-filter: blur(10px); padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .14); }
   .twin-side { overflow-y: auto; padding: 14px; display: grid; gap: 16px; align-content: start; background: var(--panel); color: var(--text); border-left: 1px solid var(--border); }
   .twin-side h2 { font-size: 15px; margin: 0 0 8px; }
   .twin-side label { display: grid; gap: 3px; font-size: 13px; }
@@ -36,6 +36,8 @@
   .twin-log-call { font-family: ui-monospace, Menlo, monospace; color: var(--brand); overflow-wrap: anywhere; }
   .twin-log-result { font-family: ui-monospace, Menlo, monospace; opacity: .65; overflow-wrap: anywhere; }
   .twin-log-error { color: #d1382c; font-weight: 600; }
+  .twin-physics p, .twin-physics ul { font-size: 13px; line-height: 1.45; margin: 6px 0; padding-left: 0; list-style: none; }
+  .twin-physics code { display: block; overflow-x: auto; white-space: nowrap; padding: 8px 10px; border-radius: 6px; background: var(--panel-2); font: 12.5px ui-monospace, Menlo, monospace; }
   .twin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .twin-table th, .twin-table td { text-align: left; padding: 4px 6px 4px 0; border-bottom: 1px solid var(--border); }
   @media (max-width: 900px) { .twin { grid-template-columns: 1fr; height: auto; } .twin-stage { height: 60vh; } .twin-side { border-left: 0; } }
@@ -95,6 +97,20 @@
       <button id="earningsBtn" class="btn btn-outline" type="button">Compare 30 days: plan vs nothing</button>
       <div id="earnings" style="margin-top:8px"></div>
       <div id="fishMarket" style="margin-top:8px"></div>
+    </section>
+    <section class="twin-physics">
+      <h2>How the physics works</h2>
+      <p><b>Pollution spreading.</b> Every substance (phosphorus, algae, oxygen, toxin, heat) follows the advection-diffusion-reaction equation:</p>
+      <code>∂C/∂t + u·∇C = ∇·(K∇C) + S − λC + R(C)</code>
+      <ul>
+        <li><b>u·∇C</b>: currents carry pollution.</li>
+        <li><b>∇·(K∇C)</b>: it diffuses sideways and between depth layers. Warm water on top resists mixing, which traps low-oxygen water at the bottom.</li>
+        <li><b>S − λC + R(C)</b>: river inflow adds it, it decays, and it reacts, like algae consuming phosphorus.</li>
+      </ul>
+      <p><b>Live currents.</b> The moving streaks come from a fluid mechanics PDE. Wind stress and lake depth set a streamfunction ψ, solved on the real lakebed:</p>
+      <code>∇·(h⁻²∇ψ) = (1/r) ∇×(τ/ρh)</code>
+      <p>Water runs downwind in the shallows and returns over the deep parts. Change the wind and the currents change. Continuity then gives the vertical motion, so water volume is conserved.</p>
+      <p class="twin-note">Solved on a 128 × 48 × 12 grid with 1-hour steps. Streak motion is sped up so you can see it. This is a screening model: it simplifies the Navier-Stokes equations, leaves out Earth's rotation, and uses many placeholder coefficients. It ranks options and doesn't forecast exact values.</p>
     </section>
   </aside>
 </main>

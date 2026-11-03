@@ -69,6 +69,7 @@ export function createSim(scene, opts = {}) {
     const dist = faceIsX[f] ? dx : dy;
     faceD[f] = c.Kh * (faceH[f] / nz) * faceWidth[f] / dist;
   }
+  const uSurf = new Float32Array(nCols), vSurf = new Float32Array(nCols);  // surface current, m/s
   const wf = new Float64Array(nCols * (nz + 1));  // upward flux through the top of layer k
   const gShear = new Float64Array(nz);
   { let mean = 0;
@@ -146,6 +147,11 @@ export function createSim(scene, opts = {}) {
       const bt = faceIsX[f] ? -(psi[I + nI * (J + 1)] - psi[I + nI * J]) : psi[I + 1 + nI * J] - psi[I + nI * J];
       const s = drift * (faceIsX[f] ? wx : wy);
       for (let k = 0; k < nz; k++) flux[f + nF * k] = bt / nz + s * gShear[k] * (faceH[f] / nz) * faceWidth[f];
+    }
+    uSurf.fill(0); vSurf.fill(0);
+    for (let f = 0; f < nF; f++) {
+      const vel = flux[f] / ((faceH[f] / nz) * faceWidth[f]) / 2, arr = faceIsX[f] ? uSurf : vSurf;
+      arr[faceL[f]] += vel; arr[faceR[f]] += vel;
     }
     // Continuity sets the flux through each layer's top, integrating up from a closed bed.
     const net = new Float64Array(nCols * nz);
@@ -440,6 +446,7 @@ export function createSim(scene, opts = {}) {
   const sim = {
     scene, fields, step, metrics, addAction, setScenario, clone, reset, resetTracking, exportState, importState,
     get scenario() { return { ...scenario }; },
+    surfaceFlow() { return { u: uSurf, v: vSurf }; },
     get simDays() { return simDays; },
     get sites() { return sites; },
     get wetCols() { return wetCols; },
