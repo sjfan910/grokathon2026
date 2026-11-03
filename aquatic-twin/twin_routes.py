@@ -55,8 +55,8 @@ def _schema(props, required):
     return {"type": "object", "properties": props, "required": required}
 
 
-def _post(url, headers, payload):
-    r = requests.post(url, json=payload, headers=headers, timeout=180)
+def _post(url, headers, payload, timeout=180):
+    r = requests.post(url, json=payload, headers=headers, timeout=timeout)
     if not r.ok:
         raise RuntimeError(f"{r.status_code}: {r.text[:500]}")
     return r.json()
@@ -108,12 +108,12 @@ def _mock_turn(state, results):
 def _gemini_call(payload):
     """Tries the main model, then the backup, because Gemini returns 503 when a model is busy."""
     base = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
-    models = [os.getenv("GEMINI_MODEL", "gemini-3.8-flash"), os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.1-flash-lite")]
+    models = [os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite"), os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.8-flash")]
     error = None
     for model in models:
         try:
-            return _post(f"{base}/models/{model}:generateContent", {"x-goog-api-key": os.environ["GEMINI_API_KEY"]}, payload)
-        except RuntimeError as e:
+            return _post(f"{base}/models/{model}:generateContent", {"x-goog-api-key": os.environ["GEMINI_API_KEY"]}, payload, timeout=30)
+        except (RuntimeError, requests.RequestException) as e:
             error = e
     raise error
 
