@@ -38,6 +38,19 @@
   .twin-log-error { color: #d1382c; font-weight: 600; }
   .twin-physics p, .twin-physics ul { font-size: 13px; line-height: 1.45; margin: 6px 0; padding-left: 0; list-style: none; }
   .twin-physics code { display: block; overflow-x: auto; white-space: nowrap; padding: 8px 10px; border-radius: 6px; background: var(--panel-2); font: 12.5px ui-monospace, Menlo, monospace; }
+  .twin-analysis { border-bottom: 1px solid var(--border); padding-bottom: 14px; }
+  .twin-status { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: #fff; margin-bottom: 8px; }
+  .twin-status.twin-tone-high { background: #c9352b; } .twin-status.twin-tone-medium { background: #b9770e; } .twin-status.twin-tone-low, .twin-status.twin-tone-ok { background: #1f8a5b; }
+  .twin-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .twin-tiles div { display: grid; gap: 1px; padding: 8px 10px; background: var(--panel-2); border-radius: 8px; }
+  .twin-tiles span { font-size: 11px; opacity: .75; }
+  .twin-tiles b { font: 600 15px ui-monospace, Menlo, monospace; }
+  .twin-tiles span.twin-worse, .twin-tiles span.twin-better { display: inline; font-size: 11px; opacity: 1; }
+  .twin-worse { color: #e5534b; } .twin-better { color: #2fb37a; }
+  .twin-issues { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; font-size: 12.5px; line-height: 1.35; }
+  .twin-issues li { padding: 6px 0 6px 10px; border-left: 3px solid #1f8a5b; }
+  .twin-issues li.twin-tone-high { border-left-color: #c9352b; } .twin-issues li.twin-tone-medium { border-left-color: #b9770e; }
+  .twin-narrative { font-size: 13px; line-height: 1.4; margin: 10px 0 0; }
   .twin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .twin-table th, .twin-table td { text-align: left; padding: 4px 6px 4px 0; border-bottom: 1px solid var(--border); }
   @media (max-width: 900px) { .twin { grid-template-columns: 1fr; height: auto; } .twin-stage { height: 60vh; } .twin-side { border-left: 0; } }
@@ -56,6 +69,12 @@
     <div id="legend"></div>
   </div>
   <aside class="twin-side">
+    <section class="twin-analysis">
+      <h2>Live economic and ecosystem analysis</h2>
+      <div id="analysis"></div>
+      <p id="narrative" class="twin-narrative" hidden></p>
+      <p id="analystNote" class="twin-note">Engine: local rules, updated from the solver as it runs. Dollar figures rest on published anchors and labelled assumptions.</p>
+    </section>
     <section>
       <h2>View</h2>
       <div class="twin-grid">

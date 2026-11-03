@@ -166,6 +166,35 @@ def _xai_turn(state, results):
     return "\n".join(text) or None, calls
 
 
+ANALYST_PROMPT = """You are a regional economist watching a screening model of Lake Erie. Using only the JSON below,
+write two plain sentences for a non-expert on what is happening to fish, biodiversity and local economic output, and what to do next.
+Do not invent numbers. Say "the model" rather than stating anything as observed fact.\n\n"""
+
+
+def _gemini_analyst(data):
+    base = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
+    model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+    res = _post(f"{base}/models/{model}:generateContent", {"x-goog-api-key": os.environ["GEMINI_API_KEY"]},
+                {"contents": [{"role": "user", "parts": [{"text": ANALYST_PROMPT + json.dumps(data)}]}]})
+    return "".join(p.get("text", "") for p in res["candidates"][0]["content"].get("parts", []))
+
+
+def _grok_analyst(data):
+    """PLACEHOLDER, not connected: the organizers didn't provide Grok API access.
+
+    Planned agentic version: grok-4.7 with x_search and web_search, so posts and news about a bloom,
+    fish kills or beach closures can be checked against the model's numbers, with citations.
+    """
+    raise NotImplementedError("Grok API access wasn't available. See the README.")
+
+
+ANALYSTS = {"gemini": ("Gemini", "GEMINI_API_KEY", _gemini_analyst), "xai": ("Grok", "XAI_API_KEY", _grok_analyst)}
+
+
+def _analyst():
+    return os.getenv("ANALYST_PROVIDER", "local").strip().lower()
+
+
 PROVIDERS = {
     "mock": ("Simulated (no LLM)", None, _mock_turn, lambda g: {"goal": g, "turn": 0, "trials": []}),
     "gemini": ("Gemini", "GEMINI_API_KEY", _gemini_turn, lambda g: {"contents": [{"role": "user", "parts": [{"text": g}]}]}),
@@ -181,7 +210,7 @@ def _provider():
 @twin_bp.before_request
 def local_only():
     # Keys cost money, so operator calls only come from the laptop running the server.
-    if request.endpoint == "twin.llm" and request.remote_addr not in ("127.0.0.1", "::1"):
+    if request.endpoint in ("twin.llm", "twin.analysis") and request.remote_addr not in ("127.0.0.1", "::1"):
         return jsonify({"error": "The AI operator is only available from the computer running the server."}), 403
     if (request.content_length or 0) > 4_000_000:
         return jsonify({"error": "Request too large."}), 413
@@ -191,7 +220,25 @@ def local_only():
 def provider():
     name = _provider()
     label = PROVIDERS[name][0] if name in PROVIDERS else name
-    return jsonify({"provider": name, "label": label})
+    analyst = _analyst()
+    return jsonify({"provider": name, "label": label, "analyst": analyst,
+                    "analystLabel": ANALYSTS[analyst][0] if analyst in ANALYSTS else "local rules"})
+
+
+@twin_bp.route("/analysis", methods=["POST"])
+def analysis():
+    name = _analyst()
+    if name not in ANALYSTS:
+        return jsonify({"narrative": None})
+    label, key_name, write = ANALYSTS[name]
+    if not os.getenv(key_name):
+        return jsonify({"error": f"{key_name} is not set."}), 503
+    try:
+        return jsonify({"narrative": write(request.get_json(silent=True) or {})})
+    except NotImplementedError as e:
+        return jsonify({"error": str(e)}), 501
+    except Exception as e:
+        return jsonify({"error": f"{label} request failed: {e}"}), 502
 
 
 @twin_bp.route("/llm", methods=["POST"])

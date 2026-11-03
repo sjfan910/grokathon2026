@@ -40,6 +40,7 @@ We didn't have Grok API or Grok Bot access tonight. The `xai` provider in `aquat
 - **Run the operator on `grok-4.7`** with function calling, so Grok designs and compares experiments on the solver.
 - **Added live field reports** with `x_search` and `web_search`, so posts and news about a bloom set the starting scenario, with citations.
 - **Built a Lake Watch Bot on Grok Bot.** A scheduled routine would run `aquatic-twin/web/headless.js --live` on the Bot's cloud computer and message a person for approval only when forecast toxin at the Toledo intake crosses 1 µg/L.
+- **Made the live analysis agentic.** The panel runs on local rules, with optional Gemini commentary. A placeholder for Grok, `_grok_analyst` in `aquatic-twin/twin_routes.py`, marks where `x_search` and `web_search` would check the model against posts and news about blooms, fish kills and beach closures.
 - **Let anyone report a bloom on X.** Tagging `@bot` under a bloom photo would hand the post to the same routine.
 
 ## Coefficient sources

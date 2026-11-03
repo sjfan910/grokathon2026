@@ -2,6 +2,7 @@
 import { createSim } from '/twin/solver.js';
 import { createView, FIELD_STYLE } from '/twin/view.js';
 import { makeExecutor, runOperator, replay } from '/twin/agent.js';
+import { analyze, renderAnalysis } from '/twin/analyst.js';
 import { earningsCall, renderEarnings, renderFishMarket } from '/twin/econ.js';
 
 const $ = (id) => document.getElementById(id);
@@ -102,7 +103,23 @@ function showEarnings(days = 30) {
 }
 $('earningsBtn').onclick = () => showEarnings();
 
-let frame = 0;
+let frame = 0, latestAnalysis = null, latestMetrics = null;
+
+// Optional written commentary from a live model. Off unless ANALYST_PROVIDER is set in aquatic-twin/.env.
+fetch('/api/twin/provider').then((r) => r.json()).then((p) => {
+  if (!p.analyst || p.analyst === 'local') return;
+  $('analystNote').textContent = `Engine: local rules, with commentary from ${p.analystLabel}. Dollar figures rest on published anchors and labelled assumptions.`;
+  const ask = async () => {
+    if (!latestMetrics) return;
+    try {
+      const r = await fetch('/api/twin/analysis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ metrics: latestMetrics, issues: latestAnalysis.issues }) });
+      const d = await r.json();
+      if (r.ok && d.narrative) { $('narrative').textContent = d.narrative; $('narrative').hidden = false; }
+    } catch { /* the local panel keeps working */ }
+  };
+  ask();
+  setInterval(ask, 20000);
+}).catch(() => {});
 function loop() {
   if (playing && !trialRunning) {
     sim.step(stepsPerFrame);
@@ -116,6 +133,9 @@ function loop() {
   if (!trialRunning) view.update(sim);
   if (frame++ % 15 === 0) {
     const m = sim.metrics();
+    latestAnalysis = analyze(m);
+    renderAnalysis($('analysis'), latestAnalysis);
+    latestMetrics = m;
     $('metrics').innerHTML = [['Day', m.simDays.toFixed(0)], ['Bloom', `${m.bloomKm2} km²`], ['Low-oxygen bed', `${m.hypoxicKm2} km²`],
       ['Toxin at intake', `${m.intakeToxin} µg/L`], ['Fish habitat', m.habitatIndex]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
   }
