@@ -68,8 +68,7 @@ MOCK_PLANS = [
     ("algaecide at the intake", [{"type": "algaecide", "site": "toledo_intake", "radius": 6, "amount": 400}]),
     ("alum at the intake", [{"type": "alum", "site": "toledo_intake", "radius": 8, "amount": 8000}]),
     ("wetlands at the river mouth", [{"type": "wetland", "site": "maumee", "amount": 150}]),
-    ("alum plus wetlands", [{"type": "alum", "site": "toledo_intake", "radius": 8, "amount": 3000},
-                            {"type": "wetland", "site": "maumee", "amount": 100}]),
+    ("alum at the river mouth", [{"type": "alum", "site": "maumee", "radius": 3, "amount": 4000}]),
 ]
 
 

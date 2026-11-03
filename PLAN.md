@@ -10,7 +10,7 @@ The page already runs at `/water` with a working solver, so nobody starts from z
 
 | Person | Limit | Job | Only edit these |
 | --- | --- | --- | --- |
-| **Kushagra** | $100 | Solver tuning, Grok loop, Grok Bot | `twin/solver.js`, `twin/solver.test.js`, `twin/agent.js`, `twin/headless.js`, `aquatic-twin/twin_routes.py` |
+| **Kushagra** | $100 | Solver tuning, AI operator | `twin/solver.js`, `twin/solver.test.js`, `twin/agent.js`, `twin/headless.js`, `aquatic-twin/twin_routes.py` |
 | **Shanjay** | $20 | How it looks: the 3D view and page | `twin/view.js`, `twin/app.js`, `twin/water.html` |
 | **Shija** | $20 | Real lakebed, economics, README, Devpost, pitch | `aquatic-twin/scripts/build_scene.py`, `twin/erie.scene.json`, `twin/econ.js`, `README.md` |
 
@@ -22,7 +22,7 @@ Pick the model in the Claude app's model picker, or run `claude --model <id>`.
 
 | Person | Task | Model |
 | --- | --- | --- |
-| Kushagra | Solver physics, Grok loop debugging | **Opus 5.5** (`claude-opus-5-5`) |
+| Kushagra | Solver physics, operator debugging | **Opus 5.5** (`claude-opus-5-5`) |
 | Kushagra | Small edits, running tests, reading output | **Sonnet 5.5** (`claude-sonnet-5-5`) |
 | Shanjay | `view.js`, shaders, page layout | **Sonnet 5.5** (`claude-sonnet-5-5`) |
 | Shanjay | CSS tweaks, labels, one-line changes | **Haiku 5.5** (`claude-haiku-5-5`) |
@@ -51,7 +51,7 @@ Pick the model in the Claude app's model picker, or run `claude --model <id>`.
 
 **Behind at 8:25? Cut in this order:** cutaway, habitat layer, town breakdown, Bot routine (keep one manual Bot run and a screenshot).
 
-**Never cut:** the 3D sim, the Grok tool loop.
+**Never cut:** the 3D sim, the operator tool loop.
 
 ## Setup (2 minutes)
 
@@ -88,7 +88,7 @@ Commit every 10 minutes. If you need a change in someone else's file, say it out
 > Read CLAUDE.md. Do one at a time and stop after each. Files: `twin/agent.js`, `aquatic-twin/twin_routes.py`, `twin/solver.js`.
 > 1. Click "Run experiments" on /water and fix whatever stops one complete run on `LLM_PROVIDER=mock`.
 > 2. Make sure algaecide does worse than alum or upstream cuts on `peakIntakeToxin` in `test_plan`, so Grok rejects it from the numbers. Don't hard-code that outcome.
-> 3. Make sure Grok testing 3 to 5 plans doesn't freeze the page.
+> 3. Make sure testing 3 to 5 plans doesn't freeze the page.
 > 4. Save a good run to `twin/saved-run.json` for the Replay button.
 
 **At 8:40:** set `LLM_PROVIDER=gemini` in `aquatic-twin/.env`, restart, and run once. Use it for the demo only. If it fails, go back to `mock` or use Replay.
@@ -118,7 +118,7 @@ Commit every 10 minutes. If you need a change in someone else's file, say it out
 | --- | --- | --- |
 | 0:00 | `/water`, lake at rest | "In 2014, about half a million people around Toledo were told not to drink their tap water because of a bloom in this lake." |
 | 0:20 | Play. Load today's river and wind. Separate the layers. | "Real lakebed, live river gauge, live wind, and transport equations solved on a 3D grid in this tab." |
-| 0:50 | Ask the operator. It tests plans while the camera follows. Algaecide spikes toxin and gets dropped. | "The operator runs the experiments itself. Every number it quotes comes from a solver run." |
+| 0:50 | **Press Pause near day 15**, because timing matters: after about day 25, no plan under budget meets the limit. Ask the operator. It tests plans while the camera follows. Algaecide spikes toxin and gets dropped. | "The operator runs the experiments itself. Every number it quotes comes from a solver run." |
 | 1:40 | Habitat field. Earnings call panel. | "We treated the lake like a company. Here's what the bloom costs and what this plan returns." |
 | 2:45 | Navbar link, repo. | "This is the water quality piece Aquatic Sustainability was missing. It's a screening model, and the README says what's measured and what's assumed." |
 
