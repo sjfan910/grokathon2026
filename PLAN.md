@@ -10,11 +10,11 @@ The page already runs at `/water` with a working solver, so nobody starts from z
 
 | Person | Limit | Job | Only edit these |
 | --- | --- | --- | --- |
-| **Kushagra** | $100 | Solver tuning, Grok loop, Grok Bot | `twin/solver.js`, `twin/solver.test.js`, `twin/agent.js`, `twin/headless.js`, `app/twin_routes.py` |
-| **Shanjay** | $20 | How it looks: the 3D view and page | `twin/view.js`, `twin/app.js`, `static/pages/water.html`, `static/components/navbar.html` |
-| **Shija** | $20 | Real lakebed, economics, README, Devpost, pitch | `scripts/build_scene.py`, `twin/erie.scene.json`, `twin/econ.js`, `README.md` |
+| **Kushagra** | $100 | Solver tuning, Grok loop, Grok Bot | `twin/solver.js`, `twin/solver.test.js`, `twin/agent.js`, `twin/headless.js`, `aquatic-twin/twin_routes.py` |
+| **Shanjay** | $20 | How it looks: the 3D view and page | `twin/view.js`, `twin/app.js`, `twin/water.html` |
+| **Shija** | $20 | Real lakebed, economics, README, Devpost, pitch | `aquatic-twin/scripts/build_scene.py`, `twin/erie.scene.json`, `twin/econ.js`, `README.md` |
 
-`twin/` means `aquatic-sustainability/backend/static/js/twin/`. Swap Shanjay and Shija if that suits you better. Whoever is on SimpliEarn should take the economics, since the earnings call is their format.
+`twin/` means `aquatic-twin/web/`. `aquatic-sustainability/` is an untouched copy of the BDBI project, so never edit it. Swap Shanjay and Shija if that suits you better. Whoever is on SimpliEarn should take the economics, since the earnings call is their format.
 
 ## Which model to use
 
@@ -42,9 +42,9 @@ Pick the model in the Claude app's model picker, or run `claude --model <id>`.
 
 | By | Kushagra | Shanjay | Shija |
 | --- | --- | --- | --- |
-| **8:10** | Grok API key in `.env`. Check Grok Bot access. | Page running locally. | Page running locally. Ask organizers about the demo slot. |
-| **8:20** | One full Grok run works. | Default view readable on a projector. | Real NOAA lakebed committed. |
-| **8:30** | Grok rejects algaecide from the numbers. Bot job runs once. | Separate-layers slider is the showpiece. | Earnings call reads well. Coefficient sources in README. |
+| **8:10** | Confirm the operator runs. Keep the paid key unused until the demo. | Page running locally. | Page running locally. Ask organizers about the demo slot. |
+| **8:20** | One full operator run works. | Default view readable on a projector. | Real NOAA lakebed committed. |
+| **8:30** | Operator rejects algaecide from the numbers. | Separate-layers slider is the showpiece. | Earnings call reads well. Coefficient sources in README. |
 | **8:40** | **Freeze.** Save `saved-run.json`. | **Freeze.** Record a backup video. | **Freeze.** README and Devpost text done. |
 | **8:45** | | | **Submit to Devpost.** |
 | After | Rehearse Bot moment. | Rehearse on the demo laptop. | Run the demo script twice. |
@@ -59,25 +59,19 @@ Pick the model in the Claude app's model picker, or run `claude --model <id>`.
 git clone https://github.com/sjfan910/grokathon2026.git
 ```
 ```bash
-cd grokathon2026/aquatic-sustainability
+cd grokathon2026
 ```
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 ```
 ```bash
-pip install flask flask-cors supabase requests certifi rq redis python-dotenv
+pip install -r aquatic-twin/requirements.txt
 ```
 ```bash
-cp backend/.env.example backend/.env
+python aquatic-twin/run.py
 ```
 
-Set `SECRET_KEY` to anything in `backend/.env`. Kushagra also sets `XAI_API_KEY`. Then:
-
-```bash
-cd backend && python run.py
-```
-
-Open http://localhost:5001/water.
+Open http://localhost:5001/water. No key needed: it defaults to a labelled simulated operator. For a live model, copy `aquatic-twin/.env.example` to `aquatic-twin/.env`. Never commit that file.
 
 **Git:** everyone works on `main`, in your own files only.
 
@@ -91,25 +85,17 @@ Commit every 10 minutes. If you need a change in someone else's file, say it out
 
 ### Kushagra (Opus 5.5)
 
-> Read CLAUDE.md. Do one at a time and stop after each. Files: `twin/agent.js`, `app/twin_routes.py`, `twin/solver.js`.
-> 1. With `XAI_API_KEY` set, click "Run experiments" on /water and fix whatever stops one complete Grok run. Check the `/v1/responses` payload against docs.x.ai for `web_search` and `x_search` alongside our functions.
+> Read CLAUDE.md. Do one at a time and stop after each. Files: `twin/agent.js`, `aquatic-twin/twin_routes.py`, `twin/solver.js`.
+> 1. Click "Run experiments" on /water and fix whatever stops one complete run on `LLM_PROVIDER=mock`.
 > 2. Make sure algaecide does worse than alum or upstream cuts on `peakIntakeToxin` in `test_plan`, so Grok rejects it from the numbers. Don't hard-code that outcome.
 > 3. Make sure Grok testing 3 to 5 plans doesn't freeze the page.
 > 4. Save a good run to `twin/saved-run.json` for the Replay button.
 
-**Grok Bot, by hand in its app:** name a Bot "Lake Watch" and have it clone the repo and run:
-
-```bash
-node aquatic-sustainability/backend/static/js/twin/headless.js --live --days 14
-```
-
-Save that as a skill. Create a routine every 2 hours with this boundary: "If `alert` is true, message me the forecast and options and stop for my approval. Take no other action." Press **Test**. Screenshot it for the README.
-
-Grok Bot and the Grok API are not part of a Claude plan. The docs list Premium or higher on The X Subscription, any paid legacy Cursor plan, or a linked SuperGrok or X Premium+. If none of you qualify, ask the organizers right away.
+**At 8:40:** set `LLM_PROVIDER=gemini` in `aquatic-twin/.env`, restart, and run once. Use it for the demo only. If it fails, go back to `mock` or use Replay.
 
 ### Shanjay (Sonnet 5.5)
 
-> Read CLAUDE.md. Only edit `twin/view.js`, `twin/app.js`, `static/pages/water.html`. One item at a time, small diffs, stop after each so I can check http://localhost:5001/water.
+> Read CLAUDE.md. Only edit `twin/view.js`, `twin/app.js`, `twin/water.html`. One item at a time, small diffs, stop after each so I can check http://localhost:5001/water.
 > 1. Make the default view read well on a projector: camera angle, layer opacity, colors, labels.
 > 2. Make "Separate layers" the showpiece: smooth spacing and a depth label beside each layer.
 > 3. Add a marker at each active action in `sim.actions`.
@@ -118,8 +104,8 @@ Grok Bot and the Grok API are not part of a Claude plan. The docs list Premium o
 
 ### Shija (Sonnet 5.5, then Haiku 5.5 for writing)
 
-> Read CLAUDE.md. Only edit `scripts/build_scene.py`, `twin/erie.scene.json`, `twin/econ.js`, `README.md`. One item at a time.
-> 1. Run `pip install numpy scipy`, then `python backend/scripts/build_scene.py --real` (downloads NOAA's `erie_lld.grd.gz`, 22.6 MB). This reader has never run against the real file, so read the printed stats and fix it if variable names or the sign differ. Max depth should be near 64 m. Commit `erie.scene.json` only, never the grid. Tell Kushagra to re-run the tests.
+> Read CLAUDE.md. Only edit `aquatic-twin/scripts/build_scene.py`, `twin/erie.scene.json`, `twin/econ.js`, `README.md`. One item at a time.
+> 1. Run `pip install numpy scipy`, then `python aquatic-twin/scripts/build_scene.py --real` (downloads NOAA's `erie_lld.grd.gz`, 22.6 MB). This reader has never run against the real file, so read the printed stats and fix it if variable names or the sign differ. Max depth should be near 64 m. Commit `erie.scene.json` only, never the grid. Tell Kushagra to re-run the tests.
 > 2. Replace the TODOs in `econ.js`. Keep the published anchors separate and never add them together. Keep the assumption text on screen.
 > 3. Make the earnings call read in plain language for a novice, like SimpliEarn.
 > 4. Add a sourced coefficient table to README.md. Anything unsourced stays labelled as a placeholder.
@@ -132,16 +118,15 @@ Grok Bot and the Grok API are not part of a Claude plan. The docs list Premium o
 | --- | --- | --- |
 | 0:00 | `/water`, lake at rest | "In 2014, about half a million people around Toledo were told not to drink their tap water because of a bloom in this lake." |
 | 0:20 | Play. Load today's river and wind. Separate the layers. | "Real lakebed, live river gauge, live wind, and transport equations solved on a 3D grid in this tab." |
-| 0:50 | Ask Grok. It checks reports and tests plans while the camera follows. Algaecide spikes toxin and gets dropped. | "Grok runs the experiments itself. Every number it quotes comes from a solver run." |
+| 0:50 | Ask the operator. It tests plans while the camera follows. Algaecide spikes toxin and gets dropped. | "The operator runs the experiments itself. Every number it quotes comes from a solver run." |
 | 1:40 | Habitat field. Earnings call panel. | "We treated the lake like a company. Here's what the bloom costs and what this plan returns." |
-| 2:20 | Phone: Lake Watch message from Grok Bot. Approve. | "This Bot runs the same solver on its cloud computer. It only came back because this needs a human decision." |
 | 2:45 | Navbar link, repo. | "This is the water quality piece Aquatic Sustainability was missing. It's a screening model, and the README says what's measured and what's assumed." |
 
 **"Is this accurate?"** "It's a screening model. Real geometry and live inputs, a solver that passes analytic tests, and placeholder coefficients we've labelled. It ranks options and doesn't forecast exact values."
 
 ## Judging criteria
 
-1. **Creative and extensive use of Grok tools (GrokBot, Grok API, Cursor):** Grok runs real experiments, with X and web search for field reports. Lake Watch runs on Grok Bot. We built with Claude Code, not Cursor. Say so in the README, and don't claim otherwise.
+1. **Creative use of tools:** organizers allowed any LLM API in place of Grok. The AI runs real experiments on the solver. The README says what we'd do with Grok API and Grok Bot access.
 2. **Understanding of the social good use case:** Toledo 2014, drinking water, local economic cost.
 3. **Working demo and technical execution:** a live 3D solver with tests.
 4. **Usefulness and integration with the project:** a native page in Aquatic Sustainability that fills its missing water quality tool.
@@ -167,11 +152,10 @@ Grok Bot and the Grok API are not part of a Claude plan. The docs list Premium o
 **Tests:**
 
 ```bash
-node --test aquatic-sustainability/backend/static/js/twin/solver.test.js
+node --test aquatic-twin/web/solver.test.js
 ```
 
 ## Known state
 
-- **Lakebed is a placeholder** until Shija runs `--real`. The page shows a badge until then.
 - **Coefficients and costs are screening placeholders.** Tuned so the demo shows a bloom and dead zone, not fitted to data.
-- **Grok loop and Bot have never run against a real key.** The request format comes from xAI's docs.
+- **Live LLM providers have never run against a real key.** The simulated operator is tested. Request formats come from provider docs.

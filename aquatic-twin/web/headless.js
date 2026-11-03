@@ -1,4 +1,4 @@
-// Runs the solver with no browser. This is what the Grok Bot routine calls on its cloud computer.
+// Runs the solver with no browser. This is what the scheduled watcher calls.
 //   node headless.js --days 14 --live --actions '[{"type":"alum","site":"toledo_intake","amount":8000}]'
 // Prints JSON. Set "alert": true when a person should be asked to decide.
 import { readFileSync } from 'node:fs';

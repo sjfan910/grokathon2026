@@ -1,8 +1,8 @@
-"""Build backend/static/js/twin/erie.scene.json.
+"""Build aquatic-twin/web/erie.scene.json.
 
-python backend/scripts/build_scene.py              # placeholder lakebed, no downloads, stdlib only
-python backend/scripts/build_scene.py --real       # NOAA grid: downloads erie_lld.grd.gz (22.6 MB), needs numpy + scipy
-python backend/scripts/build_scene.py --grid PATH  # same, from a local .grd or .grd.gz
+python aquatic-twin/scripts/build_scene.py              # placeholder lakebed, no downloads, stdlib only
+python aquatic-twin/scripts/build_scene.py --real       # NOAA grid: downloads erie_lld.grd.gz (22.6 MB), needs numpy + scipy
+python aquatic-twin/scripts/build_scene.py --grid PATH  # same, from a local .grd or .grd.gz
 """
 import argparse
 import gzip
@@ -14,7 +14,7 @@ import tempfile
 import urllib.request
 
 NOAA_URL = "https://www.ngdc.noaa.gov/mgg/greatlakes/erie/data/netcdf/erie_lld.grd.gz"
-OUT = os.path.join(os.path.dirname(__file__), "..", "static", "js", "twin", "erie.scene.json")
+OUT = os.path.join(os.path.dirname(__file__), "..", "web", "erie.scene.json")
 
 NX, NY, NZ = 128, 48, 12
 LON0, LON1, LAT0, LAT1 = -83.6, -78.75, 41.35, 42.95

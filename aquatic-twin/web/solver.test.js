@@ -1,4 +1,4 @@
-// Run from repo root: node --test aquatic-sustainability/backend/static/js/twin/solver.test.js
+// Run from repo root: node --test aquatic-twin/web/solver.test.js
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

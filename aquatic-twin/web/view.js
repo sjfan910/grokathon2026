@@ -1,6 +1,6 @@
 // 3D view: lakebed mesh plus one terrain-following sheet per layer, all sampling a Data3DTexture.
 import * as THREE from 'three';
-import { OrbitControls } from '/static/vendor/three/OrbitControls.js';
+import { OrbitControls } from '/twin/vendor/three/OrbitControls.js';
 
 export const FIELD_STYLE = {
   T: { label: 'Temperature', unit: '°C', lo: 5, hi: 30, invert: 0, stops: [0x2b4c9b, 0x35b0ab, 0xf2c14e, 0xd1382c] },

@@ -1,0 +1,8 @@
+flask
+flask-cors
+supabase
+requests
+certifi
+rq
+redis
+python-dotenv

@@ -1,5 +1,5 @@
-// Grok operator: the browser runs each tool call on the real solver, so the view moves as Grok works.
-// Tool schemas and the system prompt live in backend/app/twin_routes.py.
+// AI operator: the browser runs each tool call on the real solver, so the view moves as it works.
+// Tool schemas, the system prompt and the providers live in aquatic-twin/twin_routes.py.
 
 const nextFrame = () => new Promise((r) => setTimeout(r, 30));
 
@@ -35,31 +35,25 @@ export function makeExecutor({ getSim, view, onPlanApplied }) {
   };
 }
 
-export async function runGrok(goal, exec, log) {
+export async function runOperator(goal, exec, log) {
   const run = [];
-  let body = { input: [{ role: 'user', content: goal }] };
-  for (let turn = 0; turn < 14; turn++) {
-    const res = await fetch('/api/twin/grok', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  let body = { goal };
+  for (let turn = 0; turn < 16; turn++) {
+    const res = await fetch('/api/twin/llm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || `Grok request failed (${res.status})`);
-    const outputs = [];
-    for (const item of data.output || []) {
-      if (item.type === 'message') {
-        for (const part of item.content || []) if (part.text) { log('grok', part.text); run.push({ say: part.text }); }
-      } else if (item.type === 'function_call') {
-        const args = JSON.parse(item.arguments || '{}');
-        log('call', `${item.name}(${JSON.stringify(args)})`);
-        let result;
-        try { result = await exec(item.name, args); } catch (e) { result = { error: e.message }; }
-        log('result', JSON.stringify(result));
-        run.push({ name: item.name, args });
-        outputs.push({ type: 'function_call_output', call_id: item.call_id, output: JSON.stringify(result) });
-      } else if (/search/.test(item.type || '')) {
-        log('call', `Grok used ${item.type}`);
-      }
+    if (!res.ok) throw new Error(data.error || `Operator request failed (${res.status})`);
+    if (data.text) { log('grok', data.text); run.push({ say: data.text }); }
+    const results = [];
+    for (const call of data.calls || []) {
+      log('call', `${call.name}(${JSON.stringify(call.args)})`);
+      let result;
+      try { result = await exec(call.name, call.args); } catch (e) { result = { error: e.message }; }
+      log('result', JSON.stringify(result));
+      run.push({ name: call.name, args: call.args });
+      results.push({ id: call.id, name: call.name, output: JSON.stringify(result) });
     }
-    if (!outputs.length) break;
-    body = { input: outputs, previous_response_id: data.id };
+    if (!results.length) break;
+    body = { state: data.state, results };
   }
   try { localStorage.setItem('twinLastRun', JSON.stringify(run)); } catch { /* replay is optional */ }
   return run;
@@ -67,7 +61,7 @@ export async function runGrok(goal, exec, log) {
 
 // Offline fallback for bad Wi-Fi. Runs a saved run's tool calls on the solver, labelled as a replay.
 export async function replay(run, exec, log) {
-  log('call', 'Replaying a saved Grok run');
+  log('call', 'Replaying a saved operator run');
   for (const step of run) {
     if (step.say) { log('grok', step.say); continue; }
     log('call', `${step.name}(${JSON.stringify(step.args)})`);

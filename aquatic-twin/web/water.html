@@ -9,7 +9,7 @@
   // Demo convenience: main.js sends visitors to /login unless this flag is set.
   try { localStorage.setItem('skippedLogin', '1'); } catch (e) {}
 </script>
-<script type="importmap">{ "imports": { "three": "/static/vendor/three/three.module.min.js" } }</script>
+<script type="importmap">{ "imports": { "three": "/twin/vendor/three/three.module.min.js" } }</script>
 <style>
   .twin { display: grid; grid-template-columns: minmax(0, 1fr) 380px; height: calc(100vh - 64px); min-height: 560px; }
   .twin-stage { position: relative; min-width: 0; background: #07141b; overflow: hidden; }
@@ -79,7 +79,7 @@
       <p id="liveNote"></p>
     </section>
     <section>
-      <h2>Ask Grok</h2>
+      <h2 id="operatorTitle">AI operator</h2>
       <form id="grokForm">
         <textarea id="goal" rows="3">Keep Toledo's intake below 1 µg/L toxin through this bloom for under $5M. Check current reports, test options, and apply the best plan.</textarea>
         <div class="twin-row" style="margin-top:8px">
@@ -96,7 +96,7 @@
     </section>
   </aside>
 </main>
-<script type="module" src="/static/js/twin/app.js"></script>
+<script type="module" src="/twin/app.js"></script>
 <script src="/static/js/components/navbar.js" defer></script>
 <script src="/static/js/main.js" defer></script>
 </body>

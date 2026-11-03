@@ -1,16 +1,17 @@
 // Wires the page together. Owner: Shanjay. window.twin = { sim, view } is there for console debugging.
-import { createSim } from '/static/js/twin/solver.js';
-import { createView, FIELD_STYLE } from '/static/js/twin/view.js';
-import { makeExecutor, runGrok, replay } from '/static/js/twin/agent.js';
-import { earningsCall, renderEarnings } from '/static/js/twin/econ.js';
+import { createSim } from '/twin/solver.js';
+import { createView, FIELD_STYLE } from '/twin/view.js';
+import { makeExecutor, runOperator, replay } from '/twin/agent.js';
+import { earningsCall, renderEarnings } from '/twin/econ.js';
 
 const $ = (id) => document.getElementById(id);
-const scene = await (await fetch('/static/js/twin/erie.scene.json')).json();
+const scene = await (await fetch('/twin/erie.scene.json')).json();
 const sim = createSim(scene);
 const view = createView($('twinCanvas'), scene, $('twinLabels'));
 window.twin = { sim, view };
 
 if (scene.placeholder) $('twinBadge').hidden = false;
+fetch('/api/twin/provider').then((r) => r.json()).then((p) => { $('operatorTitle').textContent = `AI operator: ${p.label}`; }).catch(() => {});
 let playing = true, stepsPerFrame = 1;
 
 for (const [name, st] of Object.entries(FIELD_STYLE)) $('field').add(new Option(st.label, name));
@@ -57,13 +58,13 @@ const exec = makeExecutor({ getSim: () => sim, view, onPlanApplied: () => showEa
 $('grokForm').onsubmit = async (e) => {
   e.preventDefault();
   trialRunning = true;
-  try { await runGrok($('goal').value, exec, log); showEarnings(); } catch (err) { log('error', err.message); }
+  try { await runOperator($('goal').value, exec, log); showEarnings(); } catch (err) { log('error', err.message); }
   trialRunning = false;
 };
 $('replay').onclick = async () => {
   let run = null;
   try { run = JSON.parse(localStorage.getItem('twinLastRun')); } catch { /* fall through to the file */ }
-  if (!run) { const r = await fetch('/static/js/twin/saved-run.json'); run = r.ok ? await r.json() : null; }
+  if (!run) { const r = await fetch('/twin/saved-run.json'); run = r.ok ? await r.json() : null; }
   if (!run) { log('error', 'No saved run yet. Finish one Grok run first.'); return; }
   trialRunning = true;
   await replay(run, exec, log); showEarnings();

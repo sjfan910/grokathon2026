@@ -374,7 +374,12 @@ export function createSim(scene, opts = {}) {
   function clone() {
     const copy = createSim(scene, opts);
     copy.importState(exportState());
+    copy.resetTracking();  // a what-if measures from now, not from the start of the run
     return copy;
+  }
+  function resetTracking() {
+    peakIntakeToxin = 0;
+    for (const s of sites) s.bloomDays = 0;
   }
   function exportState() {
     return { scenario: { ...scenario }, simDays, peakIntakeToxin, fields,
@@ -389,7 +394,7 @@ export function createSim(scene, opts = {}) {
   }
 
   const sim = {
-    scene, fields, step, metrics, addAction, setScenario, clone, reset, exportState, importState,
+    scene, fields, step, metrics, addAction, setScenario, clone, reset, resetTracking, exportState, importState,
     get scenario() { return { ...scenario }; },
     get simDays() { return simDays; },
     get sites() { return sites; },

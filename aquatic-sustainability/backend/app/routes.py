@@ -9,6 +9,7 @@ from flask_cors import cross_origin
 from rq.job import Job
 
 from . import supabase
+from .tasks import run_flood_job
 
 bp = Blueprint("api", __name__)
 # app/routes.py
@@ -209,7 +210,6 @@ def start_flood_risk():
 
     # Run the model if not cached
     try:
-        from .tasks import run_flood_job  # imported here so the site boots without torch
         result = run_flood_job(center_lat, center_lon)
     except Exception as e:
         current_app.logger.exception("Error running flood job")

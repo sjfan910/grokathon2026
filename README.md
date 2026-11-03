@@ -1,14 +1,26 @@
 # Aquatic Twin
 
-A 3D model of Lake Erie added to [Aquatic Sustainability](https://github.com/gt-big-data/aquatic-sustainability) for the BDBI x SpaceXSI Grokathon. It solves transport equations for temperature, phosphorus, algae, oxygen and toxin in the browser. Grok tests cleanup plans on the solver, and the result is presented as an earnings call for the lake.
+A live 3D model of Lake Erie, built as a new feature for [Aquatic Sustainability](https://github.com/gt-big-data/aquatic-sustainability) at the BDBI x SpaceXSI Grokathon. It solves transport equations for temperature, phosphorus, algae, oxygen and toxin in the browser. An AI operator tests cleanup plans on the solver to keep Toledo's tap water safe, and the result is presented as an earnings call for the lake.
 
-**Run it:** see the setup in [PLAN.md](PLAN.md), then open http://localhost:5001/water.
+## Repo layout
 
-**Test it:** `node --test aquatic-sustainability/backend/static/js/twin/solver.test.js`
+| Folder | What it is |
+| --- | --- |
+| `aquatic-twin/` | **Everything we built.** Solver, 3D view, AI operator, economics, data script and server. |
+| `aquatic-sustainability/` | An unmodified copy of the BDBI project. `aquatic-twin/run.py` mounts our feature onto it at `/water` without editing it. |
 
-## Where the code is
+## Run it
 
-Everything new is in `aquatic-sustainability/backend`: `static/js/twin/` (solver, view, Grok loop, economics, headless runner), `static/pages/water.html`, `app/twin_routes.py` and `scripts/build_scene.py`.
+```bash
+pip install -r aquatic-twin/requirements.txt
+```
+```bash
+python aquatic-twin/run.py
+```
+
+Open http://localhost:5001/water. No API key is needed: without one, a labelled simulated operator runs real solver trials on a fixed list of plans. To use a live model, copy `aquatic-twin/.env.example` to `aquatic-twin/.env` and set `LLM_PROVIDER` to `gemini`, `anthropic` or `xai` with its key.
+
+**Test it:** `node --test aquatic-twin/web/solver.test.js`
 
 ## What's measured and what's assumed
 
@@ -18,13 +30,22 @@ Everything new is in `aquatic-sustainability/backend`: `static/js/twin/` (solver
 
 ## How we built it
 
-Built with Claude Code (Opus, Sonnet and Haiku), including the starter scaffold, not Cursor. TODO: describe truthfully how the team used the Grok API and Grok Bot, with screenshots.
+Built with Claude Code (Opus, Sonnet and Haiku), including the starter scaffold. The organizers allowed any LLM API in place of the Grok API, so the operator runs on a swappable provider.
+
+## If we had Grok API access
+
+We didn't have Grok API or Grok Bot access tonight. The `xai` provider in `aquatic-twin/twin_routes.py` is written from xAI's docs but has never been run. With access, we would have:
+
+- **Run the operator on `grok-4.7`** with function calling, so Grok designs and compares experiments on the solver.
+- **Added live field reports** with `x_search` and `web_search`, so posts and news about a bloom set the starting scenario, with citations.
+- **Built a Lake Watch Bot on Grok Bot.** A scheduled routine would run `aquatic-twin/web/headless.js --live` on the Bot's cloud computer and message a person for approval only when forecast toxin at the Toledo intake crosses 1 µg/L.
+- **Let anyone report a bloom on X.** Tagging `@bot` under a bloom photo would hand the post to the same routine.
 
 ## Coefficient sources
 
 | Value | Used as | Status | Source |
 | --- | --- | --- | --- |
-| Lakebed depth | `erie.scene.json`, max 61.5 m after averaging | Sourced | [NOAA NCEI Lake Erie bathymetry](https://www.ngdc.noaa.gov/mgg/greatlakes/erie.html) |
+| Lakebed depth | `aquatic-twin/web/erie.scene.json`, max 61.5 m after averaging | Sourced | [NOAA NCEI Lake Erie bathymetry](https://www.ngdc.noaa.gov/mgg/greatlakes/erie.html) |
 | 2014 bloom cost | $65M: $18M property, $20M tourism, $23M recreation, $4M water treatment | Sourced | [Bingham, Sinha & Lupi (2015), for the International Joint Commission](https://www.ectinc.com/wp-content/uploads/2019/05/Economic-Benefits-Due-to-Reduction-in-HABs-an-ECT-Report.pdf), p.3 |
 | 2014 bloom severity | Toledo 10.25, Port Clinton 4.75 and Sandusky 2.75 severity-weeks | Sourced, then summed by us | Same report, Tables 3-6 to 3-9 (Lucas, Ottawa mainland and Erie mainland) |
 | Toxin limit | Microcystin 1 µg/L | Sourced | [WHO guideline, as reported by the Toledo Blade](https://www.toledoblade.com/local/2014/08/04/Mayor-Collins-Our-water-is-safe.print) |
