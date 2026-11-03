@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lake Twin · Aquatic Sustainability</title>
+<link rel="stylesheet" href="/static/css/styles.css" />
+<script>
+  // Demo convenience: main.js sends visitors to /login unless this flag is set.
+  try { localStorage.setItem('skippedLogin', '1'); } catch (e) {}
+</script>
+<script type="importmap">{ "imports": { "three": "/static/vendor/three/three.module.min.js" } }</script>
+<style>
+  .twin { display: grid; grid-template-columns: minmax(0, 1fr) 380px; height: calc(100vh - 64px); min-height: 560px; }
+  .twin-stage { position: relative; min-width: 0; background: #07141b; overflow: hidden; }
+  #twinCanvas { position: absolute; inset: 0; }
+  #twinLabels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .twin-label { position: absolute; left: 0; top: 0; color: #fff; font: 600 12px system-ui; text-shadow: 0 1px 3px #000; padding-left: 8px; white-space: nowrap; }
+  .twin-hud { position: absolute; left: 14px; top: 14px; right: 14px; display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none; }
+  .twin-hud > * { pointer-events: auto; }
+  #metrics { display: flex; flex-wrap: wrap; gap: 14px; background: rgba(5, 18, 25, .78); color: #fff; padding: 8px 12px; border-radius: 8px; }
+  #metrics div { display: grid; }
+  #metrics span { font-size: 11px; opacity: .75; }
+  #metrics b { font: 600 15px ui-monospace, Menlo, monospace; }
+  #twinBadge { background: #a1520c; color: #fff; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 8px; align-self: flex-start; }
+  #legend { position: absolute; left: 14px; bottom: 14px; color: #fff; font-size: 13px; background: rgba(5, 18, 25, .78); padding: 6px 10px; border-radius: 8px; }
+  .twin-side { overflow-y: auto; padding: 14px; display: grid; gap: 16px; align-content: start; background: var(--panel); color: var(--text); border-left: 1px solid var(--border); }
+  .twin-side h2 { font-size: 15px; margin: 0 0 8px; }
+  .twin-side label { display: grid; gap: 3px; font-size: 13px; }
+  .twin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .twin-side input, .twin-side select, .twin-side textarea { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2); color: var(--text); font: inherit; }
+  .twin-side input[type=range] { padding: 0; }
+  .twin-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .twin-note, #liveNote { font-size: 12px; opacity: .75; margin: 6px 0 0; }
+  #grokLog { max-height: 240px; overflow-y: auto; font-size: 12.5px; display: grid; gap: 5px; margin-top: 8px; }
+  .twin-log-call { font-family: ui-monospace, Menlo, monospace; color: var(--brand); overflow-wrap: anywhere; }
+  .twin-log-result { font-family: ui-monospace, Menlo, monospace; opacity: .65; overflow-wrap: anywhere; }
+  .twin-log-error { color: #d1382c; font-weight: 600; }
+  .twin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .twin-table th, .twin-table td { text-align: left; padding: 4px 6px 4px 0; border-bottom: 1px solid var(--border); }
+  @media (max-width: 900px) { .twin { grid-template-columns: 1fr; height: auto; } .twin-stage { height: 60vh; } .twin-side { border-left: 0; } }
+</style>
+</head>
+<body>
+<div data-navbar-root></div>
+<main class="twin">
+  <div class="twin-stage">
+    <div id="twinCanvas"></div>
+    <div id="twinLabels"></div>
+    <div class="twin-hud">
+      <div id="metrics"></div>
+      <div id="twinBadge" hidden>Placeholder lakebed. Run build_scene.py --real for NOAA depths.</div>
+    </div>
+    <div id="legend"></div>
+  </div>
+  <aside class="twin-side">
+    <section>
+      <h2>View</h2>
+      <div class="twin-grid">
+        <label>Field<select id="field"></select></label>
+        <label>Speed<input id="speed" type="range" min="1" max="6" value="1" /></label>
+        <label>Separate layers<input id="explode" type="range" min="0" max="1" step="0.01" value="0" /></label>
+        <label><span id="layerToLabel">Surface to bottom</span><input id="layerTo" type="range" min="0" step="1" /></label>
+      </div>
+      <div class="twin-row" style="margin-top:8px">
+        <button id="play" class="btn btn-outline" type="button">Pause</button>
+        <button id="reset" class="btn btn-outline" type="button">Restart</button>
+      </div>
+    </section>
+    <section>
+      <h2>Conditions</h2>
+      <div class="twin-grid">
+        <label>Wind (m/s)<input id="wind" type="number" step="0.5" value="4" /></label>
+        <label>Wind from (°)<input id="windDir" type="number" value="225" /></label>
+        <label>Maumee flow (ft³/s)<input id="inflow" type="number" step="100" value="8000" /></label>
+        <label>Air temp (°C)<input id="air" type="number" value="27" /></label>
+      </div>
+      <div class="twin-row" style="margin-top:8px"><button id="live" class="btn btn-outline" type="button">Load today’s river and wind</button></div>
+      <p id="liveNote"></p>
+    </section>
+    <section>
+      <h2>Ask Grok</h2>
+      <form id="grokForm">
+        <textarea id="goal" rows="3">Keep Toledo's intake below 1 µg/L toxin through this bloom for under $5M. Check current reports, test options, and apply the best plan.</textarea>
+        <div class="twin-row" style="margin-top:8px">
+          <button class="btn" type="submit">Run experiments</button>
+          <button id="replay" class="btn btn-outline" type="button">Replay saved run</button>
+        </div>
+      </form>
+      <div id="grokLog"></div>
+    </section>
+    <section>
+      <h2>Lake Erie earnings call</h2>
+      <button id="earningsBtn" class="btn btn-outline" type="button">Compare 30 days: plan vs nothing</button>
+      <div id="earnings" style="margin-top:8px"></div>
+    </section>
+  </aside>
+</main>
+<script type="module" src="/static/js/twin/app.js"></script>
+<script src="/static/js/components/navbar.js" defer></script>
+<script src="/static/js/main.js" defer></script>
+</body>
+</html>

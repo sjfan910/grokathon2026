@@ -34,6 +34,8 @@ def create_app():
     # registering API routes
     from .routes import bp as api_bp
     app.register_blueprint(api_bp, url_prefix="/api")
+    from .twin_routes import twin_bp
+    app.register_blueprint(twin_bp, url_prefix="/api/twin")
 
     # Homepage - landing page
     @app.route("/")
